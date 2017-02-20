@@ -1,16 +1,11 @@
+# VSTLua
+Note: this software is **not** maintained. It is provided here for reference. It includes the updatest that [Hermann Seib](http://www.hermannseib.com/VstLua/index.html) added.
+
 
 # Download
 
-## THIS IS A BETA! Do NOT download unless you're willing to live with bugs!
+Download a zip of the archive, and put vstlua.dll somewhere your host will find it.
 
-# DOWNLOAD 
-
-There is a binary distribution in dist/
-
-## Index
-
-
-# FAQ (read me!)
 
 ## What does VstLua do?
 It allows simple scripting of MIDI events in a VST. It does not have any audio manipulation facilities. It is purely for MIDI control.
