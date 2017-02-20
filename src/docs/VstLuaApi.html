@@ -1,0 +1,1972 @@
+<html>
+    <head>
+        <title>VstLuaApi</title>
+         <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+<h2>Vst Lua Api</h2>
+The VstLua GUI is simple enough. The top window shows output messages from the lua script; the bottom shows 
+error messages.
+<p />
+
+<ul>
+
+<li> "load" allows you to load a new script.
+<li> "reset" reinitialises the script (useful if the script halts with an
+error or somesuch).  The "reset" button will light up if the script is currently halted. 
+<li> The "halt" button stops all callbacks to the script until "reset" is pressed. 
+<li> The "console" button brings up the console, so you can enter commands directly to the interpreter.
+<li> The "help" button brings up the any help for the script.
+
+<li> The "GUI" button at the top right switches between this default view and the custom GUI
+the script may have defined. See scripts/guitest.lua for an example.
+</ul>
+<p />
+
+<p />
+
+For scripting, the API is simple. There are two important categories of interface: the callbacks and the built in functions. Functions here
+are either C functions, or Lua functions defined in the scripts in lua/. 
+<br><br>
+<b> NB: If a function is documented, it's relatively stable, and it should be safe to use it in future scripts (changes will be backwards compatible). If you use an undocumented function, it may well change in the next release!  </b>
+
+<p />
+<br><br>
+
+
+<h3> Lua Extensions </h3>
+<ul>
+<li> There are some Lua extensions built in to this compile. These are:
+<br><br>
+    <ul>
+    <li>  Bitwise operators. You can used & (and) | (or), ^^ (xor), << (left shift), >> (right shift), \ (integer divide) and != (inequality, same as ~=)
+    <br><br>
+    <li> Argument unpacking from a table. So you can do:
+    <pre>
+       ...
+       local a, b, c in mytable
+       ...
+    </pre>
+    which reads the fields "a", "b" and "c" from "mytable" and makes them local variables.
+    
+    </ul>
+    <br><br>
+    <li> Better random number generation with the Mersenne Twister.
+    <ul>
+        <li> r=random.new() -- generate a new random number generator object
+        <li> r:seed(x) -- seed the generator object
+        <li> r:value() -- get a new float, 0--1
+        <li> r:valuei(a,b) -- return a new integer, from a to b
+        <li> r2 =r:clone() -- get a new random generator with matching state
+        
+    </ul>
+    <br><br>
+    <li> Binary structure handling (pack/unpack). See <a href="http://www.inf.puc-rio.br/~roberto/struct/"> http://www.inf.puc-rio.br/~roberto/struct/  </a>
+<br><br>
+    <li> Value hashing. hash(val) returns the hash of value, which can be of any type. The
+    hash is based on the _value_ of the argument, not the address, so you can safely compare
+    hashes between instances (hash("hello")==hash("hello"), even if this is a different session).
+    Only strings, booleans, numbers and tables have values to hash. Other types (userdata etc.)
+    get fixed hashes. Note that functions get a hash based on their name and the sourcefile they
+    were defined in.
+        
+</ul>
+   
+
+
+<h3> Basic Utilities </h3>
+<p />
+
+
+
+
+<blockquote>
+	vprint(str)
+</blockquote>
+<ul>
+<ul>
+	<li>prints out the given string to the window. NOTE: you can just use normal print() statements, which are wrappers for calls to vprint()</li>
+<p />
+</ul>
+</ul>
+
+
+
+
+<blockquote>
+	verror(str)
+</blockquote>
+<ul>
+<ul>
+	<li>prints out to the error window, and halts all callbacks until the reset button is used</li>
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+    escape(str)
+</blockquote>
+<ul>
+<ul>
+        <li> Returns a string which has all zeros replaced with \0, and all \ replaced with \\. 
+</ul>
+</ul>
+
+<blockquote>
+    unescape(str)
+</blockquote>
+<ul>
+<ul>
+        <li> Undoes escape()
+</ul>
+</ul>
+
+
+
+
+
+
+
+
+<h3> Callbacks </h3>
+<p />
+<blockquote>
+	To (re-)define a callback, just define a function with the right name. For example, to add a frame callback,
+	add the following to your script:
+<blockquote>
+	function onFrameCb()
+<blockquote>
+	... do something ...
+</blockquote>
+	end
+</blockquote>
+
+Note: callbacks are actually wrapped in the file <tt>lua/callback_wrappers.lua</tt> which does various bits of magic
+to simplify things. 
+</blockquote>
+<p />
+<blockquote>
+	onFrameCb()
+</blockquote>
+<ul>
+<ul>
+	<li>This is called each VST processing frame. Timing sensitive functions should be done in here.</li>
+<p />
+</ul>
+</ul>
+<blockquote>
+	midiEventCb(midiEvent)
+</blockquote>
+<ul>
+<ul>
+	<li>Called every time the plugin receives a MIDI event. The midi event is a table with the following fields:</li>
+<ul>
+	<li>delta: time offset in frames</li>
+	<li>channel: MIDI channel 0--15</li>
+	<li>type: midi event type (note on, cc etc.). The table "midi" loaded in init.lua defines names for these, so</li>
+	<li>you can test the type with things like "if midievent.type==midi.noteOn then"</li>
+	<li>byte2: first part of midi data. For notes, this is the note number. For cc's, this is the controller number.</li>
+	<li>byte3: second part of midi data. For notes, this is velocity. For cc's this the value of the cc.</li>
+	<li>byte4: third part of midi data. Rarely used.</li>
+	<li></li>
+	<li>The following fields are present but are rarely useful:</li>
+	<li>noteOffVelocity: velocity of the noteoff event</li>
+	<li>detune: note detune</li>
+	<li>noteLength: note length (if available)</li>
+<p />
+</ul>
+</ul>
+</ul>
+
+
+<blockquote>
+	sysexCb(sysex)
+</blockquote>
+<ul>
+<ul>
+	<li>Called when a sysex is received. The sysex is passed in as a string.
+	<li></li>
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	resetCb()
+</blockquote>
+<ul>
+<ul>
+	<li>Called before the script is reset or the plugin is shutdown. Useful to close files/network connections.
+	<li></li>
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	networkReceiveCb()
+</blockquote>
+<ul>
+<ul>
+	<li>If a non-blocking network receive loop is created with networkReceiveLoop, this callback will be called everytime a new UDP packet arrives. If this returns 1, packets will continue to be read. If it returns 0, the network loop thread will end.
+	<li></li>
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	messageCb(name, msg) 
+</blockquote>
+<ul>
+<ul>
+	<li>Called if a remote instance sends a message to this instance. The calling instances name is the first parameter, the message is the second.
+	<li></li>
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	saveProgramCb()
+</blockquote>
+<ul>
+<ul>
+	<li>Called just before a new program is loaded by the host.
+	<li></li>
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	loadProgramCb()
+</blockquote>
+<ul>
+<ul>
+	<li>Called just after a new program is loaded by the host. 
+	<li></li>
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	initCb()
+</blockquote>
+<ul>
+<ul>
+	<li>Called when the VST is loaded or reinitialised (with the reset button)</li>
+	<li></li>
+<p />
+</ul>
+</ul>
+<blockquote>
+	openCb()
+</blockquote>
+<ul>
+<ul>
+	<li>Called when the VST window is recreated (or reinitialised). All GUI creation must go in here.</li>
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	closeCb()
+</blockquote>
+<ul>
+<ul>
+	<li>Called just before the VST window is closed (or reinitialised).</li>
+<p />
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	keyCb(key)
+</blockquote>
+<ul>
+<ul>
+	<li>Called when the user presses or releases a key. The parameter is a table with the following format:
+    <ul>
+        <li> character: character
+        <li> virtual: virtual keycode. See lua/keys.lua for a complete table
+        <li> modifier: shift, alt, ctrl, etc. See lua/keys.lua for a complete table
+        <li> down: 1 if the key went down, 0 if it went up. 
+    </ul>
+    The utility function keyName in lua/keys.lua converts a key table to a readable string if you want to test it.
+    NB: Shift-Escape resets the plugin, so you cannot handle this event (it will never be passed to keyCb).
+    </li>
+<p />
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	dragCb(drag)
+</blockquote>
+<ul>
+<ul>
+	<li>Called when the user drags something into the plugin window. The parameter is a table, with each of the elements dragged. Each element
+    of this table is a subtable with two entries:
+    <ul>
+        <li> type: dragType.file(=0) if it's a filename, dragType.text(=1) if it's plain text
+        <li> value: the value, as a string        
+    </ul>    
+    If, for example, you drag one file into the window, you'll receive a table which looks like: <tt> {{type=0, value="c:\files\myfile.txt"}} </tt>
+    
+    </li>
+<p />
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	helpCb()
+</blockquote>
+<ul>
+<ul>
+	<li> Called if the user presses the help button. Should return a string describing the plugin, which will be shown in the help window.
+    </li>
+<p />
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	setParameterCb(par, value)
+</blockquote>
+<ul>
+<ul>
+	<li>Called when a VST parameter changes. Par has the number of the parameter, and value its new value (0.0--1.0).</li>
+<p />
+</ul>
+</ul>
+<blockquote>
+	valueChangedCb(control, value, str)
+</blockquote>
+<ul>
+<ul>
+	<li>Called when one of the scripts GUI controls is changed. Control is the tag id of the control (returned</li>
+from guiAddControl), and value is the new value (0.0--1.0). If the item is a menu, str is the string of the last selected element
+ (this is necessary so you can tell sub-menus apart). If it's a text box, the new string is returned. If it's an xy pad, the co-ordinates
+ are returned as a string in the form "{x,y}". 
+<p />
+</ul>
+</ul>
+
+
+
+
+<h3> Host Access </h3>
+
+
+
+
+<blockquote>
+	getHostTime()
+</blockquote>
+<ul>
+<ul>
+	<li>returns the host time information. This is a table with the following fields:</li>
+<ul>
+	<li>ppqPos: playback position in ppq's (0 if stopped, or not supported). 1.0 ppq = 1 beat.</li>
+	<li>samplePos: playback position in samples</li>
+	<li>timeSigNumerator: top bit of the time signature...</li>
+	<li>timeSigDenominator: ... and the bottom bit</li>
+	<li>tempo: host tempo in bpm</li>
+	<li>sampleRate: current sample rate</li>
+	<li>nanoSeconds: system time in nanoseconds</li>
+	<li>playing: 1 if playing, 0 if stopped</li>
+	<li>recording: 1 if recording, 0 if stopped</li>
+<p />
+</ul>
+</ul>
+</ul>
+
+
+<blockquote>
+	setHostTime()
+</blockquote>
+<ul>
+<ul>
+	<li>NOTE: most hosts don't support this (in fact, I think only Bidule supports it). Sets the host time, in the same format as getHostTime(). Returns 1 if it succeeds. </li>
+<ul>
+	<li>ppqPos: playback position in ppq's (0 if stopped, or not supported). 1.0 ppq = 1 beat.</li>	
+	<li>timeSigNumerator: top bit of the time signature...</li>
+	<li>timeSigDenominator: ... and the bottom bit</li>
+	<li>tempo: host tempo in bpm</li>	
+<p />
+</ul>
+</ul>
+</ul>
+
+
+<blockquote>
+     getCycle()
+</blockquote>
+<ul>
+<ul>
+    <li> returns the cycle data from the host (if it supports it). The result is a table with entries start and end, <br>representing the
+    start and end of the currently looped portion, both of which are in ppq units.
+</ul>
+</ul>
+
+
+
+
+<blockquote>
+     getTimeUs()
+</blockquote>
+<ul>
+<ul>
+    <li> Returns the time in microseconds. NB underlying accuracy is likely to be 1ms!
+</ul>
+</ul>
+
+
+
+<blockquote>
+     getBarStart()
+</blockquote>
+<ul>
+<ul>
+    <li> returns the start of the current bar in ppq units, if the host supports it.
+</ul>
+</ul>
+
+
+
+
+<blockquote>
+	getVSTParameter(par)
+</blockquote>
+<ul>
+<ul>
+	<li>returns the value of the given VST parameter. VstLua has 128 parameters that can be used, so</li>
+par should be from 0--127. Values are 0.0--1.0
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	setVSTParameter(par, value)
+</blockquote>
+<ul>
+<ul>
+	<li>sets the value of the given VST parameter. par should be from 0--127. Values are 0.0--1.0</li>
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	sendMidi(event)
+</blockquote>
+<ul>
+<ul>
+	<li>Send a MIDI event to the host. The format of event is the same as for midiEventCb(). This means a simple</li>
+pass through is just:
+<p />
+<pre>
+function midiEventCb(event)
+   sendMidi(event)
+end  
+</pre>   
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	sendSysex(sysex)
+</blockquote>
+<ul>
+<ul>
+	<li>Sends a sysex message. The message should be a string. lua/sysex.lua defines a number of utilities for manipulating sysex strings.
+<p />
+</ul>
+</ul>
+
+
+
+
+<h3> Network and OSC </h3>
+<blockquote>
+    networkReceiveLoop(udp)
+</blockquote>
+<ul>
+<ul>
+        <li> Pass this function an open UDP object, and it will start a thread which will monitor the socket, and call networkReceiveCb()
+        as soon as new packets arrive. This thread will stop if networkReceiveCb() returns 0, or if the socket is closed.
+</ul>
+</ul>
+
+
+
+
+
+<blockquote>
+    getInstances()
+</blockquote>
+<ul>
+<ul>
+        <li> Returns a list of all the currently running instances of VstLua. Each instance has a name like "VSTLUAx", where x is the number
+        of the instance. The table which this function returns has a field called "this" which is the name of the current (i.e. the calling) instance.
+</ul>
+</ul>
+
+
+<blockquote>
+    sendToInstance(name, msg)
+</blockquote>
+<ul>
+<ul>
+        <li> Sends a message to the instance with the given name (which should be one of the names returned by getInstances()).  The remote instance will get a messageCb callback with the message.
+</ul>
+</ul>
+
+
+
+
+
+<blockquote>
+     toOSC(table)
+</blockquote>
+<ul>
+<ul>
+    <li> Converts a table into an OSC message. The table should be formatted as follows:
+    <pre>
+    {oscaddress, {value1, value2, value3...}}
+    </pre>
+    <tt>toOSC("/test/message", {1, "hello", true})</tt> is valid, for example. <br>
+    If you want to use OSC bundles,
+    just put each message inside a subtable and call toOSC (it will convert it to a bundle automatically). Make the first element the timetag:
+    <pre>
+    {timetag, {oscaddr1, {val1, val2, val3...}}, {oscaddr2, {val1, val2, val3...}},...}
+    </pre>    
+    
+    You can nest bundles if you wish. If you want to specify types other than float, integer, string and bool you can explicitly set the type.
+    To do this, instead of passing a bare value, pass a table, where the first element is the type name, and the second is the value. For example:
+    <pre> toOSC("/test/message", {{"float", 1.0}, {"rgbacolor", 2113140}, {"blob", "someblobtext"}} </pre>
+    Valid values for the type are:
+    <ul>
+        <li> float
+        <li> double
+        <li> boolean
+        <li> int32
+        <li> int64
+        <li> timetag (the value should be a number)
+        <li> char (the value can either be a number or a single-character string)
+        <li> blob (use a string as the value)
+        <li> symbol (string as value)
+        <li> midi (number as value, which should specify the 4 bytes of a midi message)
+        <li> rgbacolor (32 bit int as value)
+        <li> infinite (does not take a value)
+        <li> nil (does not take a value)
+                    
+    </ul>
+    
+</ul>
+</ul>
+
+
+<blockquote>
+      fromOSC(string, fulltypes=false)
+</blockquote>
+<ul>
+<ul>
+    <li> Converts a binary OSC message to a table, in the same format as toOSC. If it's a bundle the first element will be the timetag,
+    otherwise it's the address of a plain message. NB: it's up to you to deal with the timetag if you want to! By default, all values will
+    be converted to basic Lua types (number, string, boolean). If you set fulltypes, a table with all the types explicitly given will be returned
+    (same format as toOSC uses, each entry is a table with type name and value).
+</ul>
+</ul>
+
+<h3> GUI </h3>
+<blockquote>
+	guiAddControl(control)
+</blockquote>
+<ul>
+<ul>
+	<li>NB: call this in the handler for openCb. calling it at other times will </li>
+	<li>cause unpredictable results (since the controls won't be recreated when the VST window reopens)</li>
+	<li></li>
+	<li>adds a GUI control. "control" should be a table with the following fields:</li>
+<p />
+<ul>
+	<li> x: position</li>
+	<li> y: position</li>
+	<li> type: type of control. Use one of the fields of GUITypes (defined in init.lua). </li>
+<ul>
+	<li>these are: </li>
+<ul>
+	<li>GUITypes.onOffButton </li>
+	<li>GUITypes.kickButton</li>
+	<li>GUITypes.transientLed (flashes when set)</li>
+	<li>GUITypes.stickLed (stays in set position)</li>
+	<li>GUITypes.knob (rotary knob)</li>
+	<li>GUITypes.hslider (horizontal slider)</li>
+	<li>GUITypes.vslider (vertical slider)</li>
+	<li>GUITypes.label (no control, just a label)</li>
+	<li>GUITypes.menu (a popup menu)</li>
+    <li>GUITypes.text (a text box)</li>
+    <li>GUITypes.xypad </li>
+    <li>GUITypes.vuMeter (display only vu meter) </li>
+    
+</ul>
+</ul>
+	<li> label: label string for the control</li>
+<p />
+	<li> menu_items: only used if the type is a menu. Should be a array containing a number of strings. Entries can also
+    define submenus, by having a table giving the name then the sub-elements. Example :
+    <pre>
+        menu_items = {'One', {'Two', {'Two.sub1', 'Two.sub2, {'Two.sub3', {'Two.sub3.sub1','Two.sub3.sub2'}}}}, 'Three'}
+    </pre>
+    defines a menu like:
+    <ul>
+        <li> One
+        <li> Two
+        <ul>
+        <li> Two.sub1
+        <li> Two.sub2
+        <li> Two.sub3
+        <ul>
+            <li>Two.sub3.sub1
+            <li>Two.sub3.sub2
+        </ul>        
+        </ul>
+    <li> Three
+    </ul>
+    
+    </li>
+    <br>
+    
+</ul>
+
+    
+	<li>this function returns the tag id for this control (as an integer). This will be used for all</li>
+access of this control (e.g. in the valueChangedCb() callback), so make sure you store it!
+<p />
+</ul>
+</ul>
+
+<blockquote>
+	guiGetSize()
+</blockquote>
+<ul>
+<ul>
+	<li>Returns the size of the GUI window as a table with "width" and "height" entries.
+<p />
+</ul>
+</ul>
+
+
+<blockquote>
+	guiSetSize(size)
+</blockquote>
+<ul>
+<ul>
+	<li>Sets the size of the GUI window. Pass a table with "width" and "height" entries, which are the new window size in pixels. Example:
+    <tt> guiSetSize({width=800, height=200}) </tt>. If you specify (0,0) for the size, the default window size will be used.
+<p />
+</ul>
+</ul>
+
+
+
+<blockquote>
+	guiSetValue(control, value)
+</blockquote>
+<ul>
+<ul>
+	<li>set the current value of the given control. control is the id returned from guiAddControl. value is from</li>
+0.0--1.0
+<p />
+</ul>
+</ul>
+
+
+
+<blockquote>
+	guiGetValue(control)
+</blockquote>
+<ul>
+<ul>
+	<li>returns the value of the given control. control is the id returned from guiAddControl. value is from</li>
+0.0--1.0
+<p />
+</ul>
+</ul>
+<blockquote>
+	guiSetLabel(control, string, highlighted)
+</blockquote>
+<ul>
+<ul>
+	<li>changes the label of a control to the given string. If highlighted is 0, draws normally, else draws with a highlighted background.</li>
+<p />
+</ul>
+</ul>
+
+<blockquote>
+     openFileSelector(pattern="*.*", func=nil)
+</blockquote>
+<ul>
+<ul>
+    <li> Opens a file selector, and returns the file selected. First argument specifies the file mask. If you pass a function as the second argument, the selector will not block the thread, and will call the given function on return.
+</ul>
+</ul>
+
+
+
+<h3> Internals </h3>
+
+<blockquote>
+     reset(scriptName)
+</blockquote>
+<ul>
+<ul>
+    <li> Resets the interpreter. If scriptName is given, the script is loaded and restarted. 
+</ul>
+</ul>
+
+<blockquote>
+     getVSTPath()
+</blockquote>
+<ul>
+<ul>
+    <li> Returns the directory which this plugin was loaded from.
+</ul>
+</ul>
+
+
+<h3> Global variables </h3>
+
+
+<blockquote>
+     VSTFrameLength
+</blockquote>
+<ul>
+<ul>
+    <li> this holds the length of the current frame in samples. It is updated immediately before onFrameCb() is called. NB: 
+    this will be nil until the first onFrame is called. 
+</ul>
+</ul>
+   
+
+
+<blockquote>
+     VSTSampleRate
+</blockquote>
+<ul>
+<ul>
+    <li> Current sample rate. Again, nil until first call of onFrame. 
+</ul>
+</ul>
+
+<blockquote>
+     ScriptName
+</blockquote>
+<ul>
+<ul>
+    <li> Full path of the current script.
+</ul>
+</ul>
+
+<blockquote>
+     VSTFrameStartUs
+</blockquote>
+<ul>
+<ul>
+    <li> Start time of the frame in us. Again, nil until first call of onFrame.
+</ul>
+</ul>
+
+<blockquote>
+     VSTProgramName
+</blockquote>
+<ul>
+<ul>
+    <li> Current program name.
+</ul>
+</ul>
+
+
+<blockquote>
+    GUISizes
+</blockquote>
+<ul>
+<ul>
+    <li> holds the sizes of each gui component (as in GUITypes, defined in init.lua). Each value is an table with a "width" and "height" field. Example:
+    <pre> GUISizes[GUITypes.knob] </pre> returns the size of the knob component.
+</ul>
+</ul>   
+   
+<h3> Customizing VstLua's GUI </h3>
+
+If you don't like the default controls for VstLua, you can replace them with your own. Create bitmaps in a subdirectory called gui/ under the
+location of the dll, and the images will be loaded in place of the original control images. The following filenames are used:
+<ul>
+<li> button.bmp -> on/off button, should be twice the height of a single button, top half on, bottom off<br><br>
+<li>  gui.bmp -> background image<br><br>
+<li> hslider.bmp -> background of horizontal slider<br><br>
+<li> hslider_handle.bmp -> handle for horizontal slider<br><br>
+<li> vslider.bmp -> background of vertical slider<br><br>
+<li> vslider_handle.bmp -> handle for vertical slider<br><br>
+<li> textbox.bmp -> textbox<br><br>
+<li> vu_on.bmp -> vu meter on bitmap<br><br>
+<li> vu_off.bmp -> vu meter off bitmap<br><br>
+<li> xypad.bmp -> XY pad bitmap<br><br>
+<li> led.bmp -> led bitmap (same format as for button)<br><br>
+<li> menu_1.bmp -> menu background<br><br>
+<li> menu_2.bmp -> menu background, when selected<br><br>
+<li> knob.bmp -> knob image, must be 31 frames stacked vertically (e.g. as created by KnobMan)<br><br>
+
+
+
+</ul>
+
+
+<h3> Lua Modules </h3>
+
+The various scripts in <tt>lua/</tt> add a bunch of functions which simplify things greatly. These are all loaded automatically at startup; they work just like the C functions.
+
+<h4> midi.lua </h4>
+
+
+<ul> <li> <h5> General features </h5>
+<blockquote>
+     Additional table entries in midi events.
+</blockquote>
+<ul>
+<ul>
+    <li> Midi events have aliased fields for easier access. Rather than using event.byte2, you can just use event.note. This works for both reading and writing. The defined aliases are:
+    <ul>
+        <li> event.note -> event.byte2
+        <li> event.velocity -> event.byte3
+        <li> event.controller -> event.byte2
+        <li> event.value -> event.byte3
+        <li> event.bend -> event.byte2 + event.byte3 (deals with splitting into MSB and LSB automatically)
+        <li> event.program -> event.byte2
+        <li> event.aftertouch -> event.byte2
+    </ul>
+</ul>
+</ul>
+
+
+</ul>
+
+
+<ul> <li> <h5> Functions </h5>
+
+<blockquote>
+noteToNumber(noteSpec)  
+</blockquote>
+<ul>
+<ul>
+    <li>Convert a notespec of the form "C-4" to a midi note number.  The last digit is the octave.
+Naturals are of the form C-4, sharps C#4, flats Cb4. Octave can be 0--9.
+</ul>
+</ul>
+
+<blockquote>
+numberToNote(number)  
+</blockquote>
+<ul>
+<ul>
+    <li>Does the opposite of noteToNumber. Only ever returns sharps or naturals, not flats (e.g. "C#4", but never "Db4").
+</ul>
+</ul>
+
+<blockquote>
+copyMidiEvent(event)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a copy of a midi event.
+</ul>
+</ul>
+
+<blockquote>
+completeMidiFields(event)
+</blockquote>
+<ul>
+<ul>
+    <li>Fill in all missing fields of an event with default values. (for example, you could create a table, fill out the type, channel and byte2 fields, and then call completeMidiFields() to transform it into a fully-specified midi event table).
+</ul>
+</ul>
+<br>
+<ul>
+<li> Event Creation
+
+<blockquote>
+sysexMsg(sysex)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a midi event which sends the given sysex string.
+</ul>
+</ul>
+
+<blockquote>
+noteOn(note,vel,channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a note on midi event with the given arguments.
+</ul>
+</ul>
+
+
+<blockquote>
+noteOff(note,channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a note off midi event with the given arguments.
+</ul>
+</ul>
+
+
+<blockquote>
+setCC(controller,value,channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a CC change event.
+</ul>
+</ul>
+
+
+<blockquote>
+programChange(program,channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a program change event.
+</ul>
+</ul>
+
+
+<blockquote>
+pitchBend(bend, channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a pitch bend event. Deals with splitting to MSB and LSB automatically.
+</ul>
+</ul>
+
+<blockquote>
+channelAftertouch(aftertouch, channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a channel aftertouch event.
+</ul>
+</ul>
+
+<blockquote>
+polyAftertouch(note, aftertouch, channel, delta=0)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a polyphonic aftertouch event.
+</ul>
+</ul>
+
+</ul>
+<blockquote>
+midiEventToString(event)
+</blockquote>
+<ul>
+<ul>
+    <li>Returns a printable string from a midi event. Example: "Ch:0 Type:noteOn C-4 57"
+</ul>
+</ul>
+
+<blockquote>
+panic()
+</blockquote>
+<ul>
+<ul>
+    <li>Sends all notes off and all sound off immediately, and clears outputNotesDown and outputCC.
+</ul>
+</ul>
+
+
+<blockquote>
+ stopAllPlaying()
+</blockquote>
+<ul>
+<ul>
+    <li> Sends a noteOff for each note currently marked as down in outputNotesDown. Useful to call in the resetCb() callback to avoid stuck notes.
+</ul>
+</ul>
+
+
+
+<blockquote>
+addMidiFilter(filter)
+</blockquote>
+<ul>
+<ul>
+    <li>Allows simple manipulation of midi events by registering a filter which responds to specific events. The filter table can have any of the fields that a midi event has (type, byte2, channel, etc.). The value of the field can either be an integer (match that number), a range given as a string with a dash (e.g. "5-17"), or a list of numbers or ranges (match any of those numbers).<br><br>
+    Filter must also have a field "callback" which will be called when an event matching the given description is detected.
+    <br><br>
+    Examples:
+    <pre>
+        --convert cc1 to pitchbend
+addMidiFilter{type=midi.cc, controller=1, callback = function(event)
+event.type = midi.pb
+event.bend = event.velocity * 127
+sendMidi(event)
+end}
+    </pre>
+    
+    <pre>
+        --transpose notes from 40--60 down by a fifth
+       addMidiFilter{type={midi.noteOn,midi.noteOff}, byte2="40-60", callback = function(event) 
+event.byte2= event.byte2-7
+sendMidi(event) 
+end}
+    </pre>
+    
+    
+    
+    
+</ul>
+</ul>
+
+
+
+
+
+
+
+</ul>
+
+
+<ul> <li> <h5> Global Variables </h5>
+
+
+<blockquote>
+      inputNotesDown 
+</blockquote>
+<ul>
+<ul>
+    <li> Stores all notes currently held down on the input to the plugin (i.e. all notes for which a note on but no matching note off has been received). This is automatically updated as events arrive.
+</ul>
+</ul>
+
+
+<blockquote>
+       outputNotesDown 
+</blockquote>
+<ul>
+<ul>
+    <li> Stores all notes currently held down on the output of the plugin. This monitors all events send via sendMidi()
+</ul>
+</ul>
+
+<blockquote>
+      inputCC 
+</blockquote>
+<ul>
+<ul>
+    <li> as inputNotesDown(), but for continuous controllers. Remember, this only tracks the state of events
+    that have happened while this script has been running (since the last reset)!
+</ul>
+</ul>
+
+<blockquote>
+    outputCC
+</blockquote>
+<ul>
+<ul>
+    <li> as inputCC(), but for controller commands sent from the script via sendMidi.
+</ul>
+</ul>
+
+
+
+<blockquote>
+     noteNames 
+</blockquote>
+<ul>
+<ul>
+    <li> maps note strings (of the form "C-" or "C#" or "Cb") to numbers in the octave.
+</ul>
+</ul>
+
+<blockquote>
+ plainNoteNames 
+</blockquote>
+<ul>
+<ul>
+    <li> as noteNames, but in the format either "C" (for naturals) or "#" for sharps (no flats).
+</ul>
+</ul>
+
+<blockquote>
+       plainNoteNumbers 
+</blockquote>
+<ul>
+<ul>
+    <li> reverse mapping of plainNoteNames, maps numbers from 0-11 to names.
+</ul>
+</ul>
+
+<blockquote>
+     noteNumbers 
+</blockquote>
+<ul>
+<ul>
+    <li> reverse mapping of noteNames, maps numbers from 0-11 to names. Only ever returns strings with sharps,
+    never flats.
+</ul>
+</ul>
+
+
+
+
+
+
+
+
+<blockquote>
+      <tt> midi </tt>
+</blockquote>
+<ul>
+<ul>
+    <li> Defines midi event types (for comparison with event.type). The values are:
+    <ul>
+    <li>
+        noteOn=9<li>
+        noteOff=8<li>
+        polyAT=10<li>
+        cc=11<li>
+        pc=12<li>
+        channelAT=13<li>
+        pb=14<li>
+        sysex=15
+    </ul>
+    
+</ul>
+</ul>
+
+<blockquote>
+      <tt> midiTypeNames </tt>
+</blockquote>
+<ul>
+<ul>
+    <li> Reverse mapping of <tt> midi </tt> (maps numbers to names)    
+</ul>
+</ul>
+
+
+
+
+<blockquote>
+      <tt> midicc </tt>
+</blockquote>
+<ul>
+<ul>
+    <li> Defines names for all midi continuous controllers according to the GM standard. The entries are:
+    <ul>
+            bankSelect=0
+            <li>
+            modulation=1
+            <li>breath=2
+            <li>foot=4
+            <li>portaTime=5
+            <li>dataMSB=6
+            <li>
+            volume=7
+            <li>balance=8
+            <li>pan=10
+            <li>expression=11
+            <li>effect1=12
+            <li>effect2=13
+            <li>
+            gp1=16
+            <li>gp2=16
+            <li>gp3=16
+            <li>gp4=16
+            <li>
+            sustain=64
+            <li>portamento=65
+            <li>sustenuto=66
+            <li>softPedal=67
+            <li>legato=68
+            <li>
+            hold2=69
+            <li>soundController1=70
+            <li>soundController2=71
+            <li>soundController3=72
+            <li>soundController4=73
+            <li>
+            soundController5=74
+            <li>soundController6=75
+            <li>soundController7=76
+            <li>soundController8=77
+            <li>soundController9=78
+            <li>
+            soundController10=79
+            <li>gp5=80
+            <li>gp6=81
+            <li>gp7=82
+            <li>gp8=83
+            <li>portaControl=84
+            <li>effect1Depth=91
+            <li>
+            effect2Depth=92
+            <li>effect3Depth=93
+            <li>effect4depth= 94
+            <li>effect5Depth=95
+            <li>dataIncrement=96
+            <li>
+            dataDecrement=97
+            <li>NRPNLSB=98
+            <li>NRPNMSB=99
+            <li>RPNLSB=100
+            <li>RPNMSB=101
+            <li>
+            allSoundOff=120
+            <li>resetAllControllers=121
+            <li>localOnOff=122
+            <li>allNotesOff=123
+            <li>omniOff=124
+            <li>
+            omniOn=125
+            <li>monoOn=126
+            <li>polyOn=127
+    
+    </ul>
+    
+   
+</ul>
+</ul>
+
+
+
+<h4> scheduler.lua </h4>
+
+
+<blockquote>
+ scheduleEvent(event)
+</blockquote>
+<ul>
+<ul>
+    <li> Schedules an event to be sent in the future. This uses the delta field of a midi event to determine timing. You can safely call scheduleEvent() with any value for delta, and the event will be played at the right time (e.g. to play in 1 second at 44100Hz, just add 44100 to event.delta and call scheduleEvent(event)). Can generally be used as a replacement for sendMidi().
+</ul>
+</ul>
+
+<h4> gui.lua </h4>
+
+<blockquote>
+ addControl(constructor)
+</blockquote>
+<ul>
+<ul>
+    <li> Simplifies management of GUI controls. It wraps up the guiAddControl functionality. It automatically scales values to the given range,
+    allows a simple callback to be used for responding to control changes, and allows automatic 
+    linkage to VST parameters. <br><br>addControl() can be called at any time, not just within openCb();
+    the creation of controls as the window is opened and closed is managed behind the scenes.
+    <br><br>
+    Call this with a constructor with the following fields:
+    <ul>
+    
+    <li> x: position
+    <li> y:
+    <li> type: (a value from GUITypes, e.g. GUITypes.onOffButton)
+    <li> label: label
+    <li> value (optional): initial value.
+    <li> max: (optional): maximum value for the control. Values will be scaled from min..max
+    <li> min: (optional): minimum value for the control. Values will be scaled from min..max
+    <li> callback: callback that will be called when a value changed occurs.
+    <li> vstparameter (optional): if specified, the value of the control will be linked to the
+    given VST parameter number.
+    
+    
+    </ul>
+    <br><br> The value returned is a table, in which setting the "value" field sets the value
+    of the control, and reading it likewise reads its current value. (e.g. time=mycontrol.value).
+    
+</ul>
+</ul>
+
+<h4> intervals.lua </h4>
+
+Defines a number of musical intervals in the following tables:
+
+
+<blockquote>
+      interval 
+</blockquote>
+<ul>
+<ul>
+    <li> Normal intervals
+    <ul>
+<li>    
+unison =0
+<li>
+minor_second=1
+<li>
+major_second=2
+<li>
+minor_third=3
+<li>
+major_third=4
+<li>
+fourth=5
+<li>
+tritone=6
+<li>
+fifth=7
+<li>
+minor_sixth=8
+<li>
+major_sixth=9
+<li>
+minor_seventh=10
+<li>
+major_seventh=11
+<li>
+octave=12
+</ul>
+
+</ul>
+</ul>
+
+<blockquote>
+     dimIntervals 
+</blockquote>
+<ul>
+<ul>
+    <li> Diminished intervals. As normal intervals, but all -1.
+</ul>
+</ul>
+
+<blockquote>
+     augIntervals 
+</blockquote>
+<ul>
+<ul>
+    <li> Augmented intervals. As normal intervals, but all +1.
+</ul>
+</ul>
+
+
+<h4> chords.lua </h4>
+
+Defines a number of chords, in the tables <tt>chords</tt> and <tt>common_chords</tt> (which is a subset of <tt>chords</tt>).
+
+
+<blockquote>
+     chords 
+</blockquote>
+<ul>
+<ul>
+    <li> Full chord list. Entries: <ul>
+    
+
+<li>+2
+
+<li>+3
+
+<li>+4
+
+<li>+b3
+
+<li>5
+
+<li>b5
+
+<li>6sus4(-5)
+
+<li>aug
+
+<li>dim
+
+<li>dim5
+
+<li>maj
+
+<li>min
+
+<li>sus2
+
+<li>sus2sus4(-5)
+
+<li>sus4
+
+<li>6
+
+<li>6sus2
+
+<li>6sus4
+
+<li>7
+
+<li>7#5
+
+<li>7b5
+
+<li>7sus2
+
+<li>7sus4
+
+<li>add2
+
+<li>add4
+
+<li>add9
+
+<li>dim7
+
+<li>dim7susb13
+
+<li>madd2
+
+<li>madd4
+
+<li>madd9
+
+<li>mmaj7
+
+<li>m6
+
+<li>m7
+
+<li>m7#5
+
+<li>m7b5
+
+<li>maj7
+
+<li>maj7#5
+
+<li>maj7b5
+
+<li>maj7sus2
+
+<li>maj7sus4
+
+<li>sus2sus4
+
+<li>6/7
+
+<li>6add9
+
+<li>7#5b9
+
+<li>7#9
+
+<li>7#9b5
+
+<li>7/11
+
+<li>7/13
+
+<li>7add4
+
+<li>7b9
+
+<li>7b9b5
+
+<li>7sus4/13
+
+<li>9
+
+<li>9#5
+
+<li>9b5
+
+<li>9sus4
+
+<li>m maj9
+
+<li>m6/7
+
+<li>m6/9
+
+<li>m7/11
+
+<li>m7add4
+
+<li>m9
+
+<li>m9/11
+
+<li>m9b5
+
+<li>maj6/7
+
+<li>maj7/11
+
+<li>maj7/13
+
+<li>maj9
+
+<li>maj9#5
+
+
+    
+    </ul>
+</ul>
+</ul>
+
+<h4> scales.lua </h4>
+Defines a number of scales and modes.
+
+<blockquote>
+       modes
+</blockquote>
+<ul>
+<ul>
+    <li> Defines the following modes:
+    <ul>
+    <li> ionian 
+<li>dorian
+<li>phyrgian 
+<li>lydian
+<li>mixolydian
+<li>aeolian
+<li>locrian 
+
+    </ul>
+</ul>
+</ul>
+
+
+<blockquote>
+       scales
+</blockquote>
+<ul>
+<ul>
+    Defines a number of scales. See the source file for details.
+    </ul>
+</ul>
+</ul>
+
+<h4> utils.lua </h4>
+<blockquote>
+       print()
+</blockquote>
+<ul>
+<ul>
+    Simple wrapper for vprint. Can print all types (including tables).
+    </ul>
+</ul>
+</ul>
+
+<blockquote>
+       print_table(table, [printer])
+</blockquote>
+<ul>
+<ul>
+    Prints the given table. You can optionally specify the print function; this will 
+    be called with a single string argument each time printing is required. By default, this
+    is vprint().
+    </ul>
+</ul>
+</ul>
+
+
+<blockquote>
+       t = reverseMapping(q)
+</blockquote>
+<ul>
+<ul>
+    Returns a reverse mapping a table, so that the key->value mappings in the original table
+    become value->key mappings in the returned table.
+    </ul>
+</ul>
+</ul>
+
+
+<blockquote>
+       str = serializeTable(t, name)
+</blockquote>
+<ul>
+<ul>
+    Returns a string, which if loaded with loadstring() and executed, will restore the given table,
+    and store it in the global variable given by name. Example:
+    <pre>
+        t = {1, 2, "hello", {4, 5, 6}}
+        str = serializeTable(t, "newTable")
+        (loadstring(str))() --restore the table
+        print_table(newTable) --prints the restored table    
+    </pre>
+    
+    </ul>
+</ul>
+</ul>
+
+<h4> callback_wrappers.lua </h4>
+This function defines the wrappers around the basic callbacks. You probably shouldn't change
+this file, but if you want to hook the callbacks, this is place to do it. It defines the following global variables:
+
+
+<blockquote>
+	help
+</blockquote>
+<ul>
+<ul>
+	<li> Set the help table to make the "Help" button give instructions when pressed. The table
+    should have three fields: name, description and author. Set this in initCb(), or at the toplevel, so that it is present when the script loads.
+    Example:
+    <pre>
+        help.name="Transpose"
+        help.description="Simple MIDI transpose. Transposes everything up by 1 semitone"
+        help.author="tzec"
+    </pre>
+    
+<p />
+</ul>
+</ul>
+
+
+
+
+
+
+<h4> timing.lua </h4>
+<blockquote>
+       length,beatIndex,timeToBeat = computeBeatTime(samplePos, tempo, sampleRate, beatFraction)
+</blockquote>
+<ul>
+<ul>
+    Computes the length of a beat (in samples), the index of the beat (i.e. the number of complete beats since the start of the sequence) and the time in samples until the next beat. The parameters are all values returned from getHostTime(). beatFraction can be used to get fractions or multiples of a beat; at 1.0 it's a whole beat, at 0.25 it's a quarter beat, at 4 it's a bar, etc.
+    
+    </ul>
+</ul>
+</ul>
+
+<h4> adsr.lua </h4>
+<blockquote>
+       class ADSR
+</blockquote>
+<ul>
+<ul>
+    Simple ADSR envelope class. Has the following methods:
+    <ul>
+        <li> <b> new(a,d,s,r) </b> a,d,r are in samples. s is a level.
+        <li> <b> trigger(level) </b> Start the envelope.
+        <li> <b> release() </b> Enter the release portion.
+        <li> <b> v = update(time) </b> Should be called in each onFrameCb(), with the VSTFrameTime as 
+        the parameter. Updates the envelope, and returns its current value.
+            
+    </ul>
+    
+    </ul>
+</ul>
+</ul>
+
+
+<h4> keys.lua </h4>
+
+<blockquote>
+       key_name(key)
+</blockquote>
+<ul>
+<ul>    
+        Translates a key table returned by keyCb() callback to a readable string.
+    </ul>
+    
+    </ul>
+</ul>
+</ul>
+
+<blockquote>
+       virtualkeys
+</blockquote>
+<ul>
+<ul>    
+       Defines virtual keycodes. The following keys are defined:
+       <ul>
+<li>      back
+<li> tab
+<li> clear
+<li> kreturn
+<li> pause
+<li> escape
+<li> space
+<li> knext
+<li>
+kend
+<li> home
+<li> left
+<li> up
+<li> right
+<li> down
+<li> pageup
+<li> pagedown
+<li> select
+<li>
+kprint
+<li> enter
+<li> snapshot
+<li> insert
+<li> delete
+<li> help
+<li> num0
+<li>
+num1
+<li> num2
+<li> num3
+<li> num4
+<li> num5
+<li> num6
+<li> num7
+<li> num8
+<li>
+num9
+<li> asterisk
+<li> plus
+<li> separator
+<li> minus
+<li> decimal
+<li> divide
+<li> f1
+<li>
+f2
+<li> f3
+<li> f4
+<li> f5
+<li> f6
+<li> f7
+<li> f8
+<li> f9
+<li> f10
+<li> f11
+<li> f12
+<li> numlock
+<li>
+scroll
+<li> shift
+<li> control
+<li> alt
+<li> equals
+       </ul>
+       
+       
+    </ul>
+    
+    </ul>
+</ul>
+</ul>
+
+<h4> persistence.lua </h4>
+<blockquote>
+    programData
+</blockquote>
+<ul>
+<ul>
+    Anything stored in this table will be stored alongside the program (preset) in the host. It will persist between sessions if the preset is stored to disk (e.g. by saving as .fxp or .fxb). You can use any primitive type in this table: strings, numbers, booleans or other tables. The table updates as programs change (it updates just before calls to saveProgramCb() and loadProgramCb(), if you want to catch the changes).   
+</ul>
+</ul>
+
+<blockquote>
+    savePersistentProgramData
+</blockquote>
+<ul>
+<ul>
+    Forces the program data string to be updated with the current value of programData.
+</ul>
+</ul>
+
+<blockquote>
+    loadPersistentProgramData
+</blockquote>
+<ul>
+<ul>
+    Updates programData with the value of the program data string.
+</ul>
+</ul>
+
+<blockquote>
+    globalPersistence
+</blockquote>
+<ul>
+<ul>
+    Peristent table, which is unaffected by programs or resets. It is reread on init, and flushed back to disk when the script ends. The table is stored in a file called "persistent_store.lua", in the same directory as the VstLua DLL.
+</ul>
+</ul>
+
+
+
+<blockquote>
+    loadGlobalPersistence
+</blockquote>
+<ul>
+<ul>
+    Updates globalPersistence. Called on script initialisation.  
+</ul>
+</ul>
+
+<blockquote>
+    saveGlobalPersistence
+</blockquote>
+<ul>
+<ul>
+    Updates the persistence file with globalPersistence. Called on script termination.  
+</ul>
+</ul>
+
+
+<h4> sysex.lua </h4>
+
+<blockquote>
+       sysexToTable(dump)
+</blockquote>
+<ul>
+<ul>
+    <li> Converts a sysex string to a list of integers.
+</ul>
+</ul>
+
+<blockquote>
+       hexToSysex(specifier)
+</blockquote>
+<ul>
+<ul>
+    <li> Slightly misleadingly named. Converts either: a number, a hex string, or a table containing these into a sysex string. Valid examples:
+    <pre>
+        hexToSysex(0xf0, 0x41, 0xf7)
+        hexToSysex("F041F7")
+        hexToSysex("F041", 31, 32, "F7")
+        hexToSysex("F041", {31, 32} "F7")
+        hexToSysex("F041", {31, "BD091A", 32} "F7")
+    </pre>
+    
+</ul>
+</ul>
+
+
+<blockquote>
+       sysexToHex(dump)
+</blockquote>
+<ul>
+<ul>
+    <li> Converts a sysex string to a hex string (like "F00441F7").
+</ul>
+</ul>
+
+
+<h4> shared.lua </h4>
+
+Shared memory functions.
+
+<blockquote>
+       setSharedMemAlias(name)
+</blockquote>
+<ul>
+<ul>
+    <li> Sets the alias for this instance to be name, and updates all active instances.
+</ul>
+</ul>
+
+
+
+<blockquote>
+       sharedMemAliases
+</blockquote>
+<ul>
+<ul>
+    <li> Table which maps raw names ("VSTLUA1" etc.) to aliased names. This will be kept up to
+    date as instances start and exit. 
+</ul>
+</ul>
+
+<blockquote>
+       sharedMemReverseAliases
+</blockquote>
+<ul>
+<ul>
+    <li> Maps the reverse of sharedMemAliases -- aliases to raw names.
+</ul>
+</ul>
+
+
+
+<blockquote>
+       sendMidiToInstance(name)
+</blockquote>
+<ul>
+<ul>
+    <li> Sends a midi message to the instance given by name. This can either be the raw name (as returned by getInstances, like "VSTLUA1", or an aliased name). The message will automatically be intercepted by the callback wrapper in the receiving instance, and sent on to that host. 
+</ul>
+</ul>
+
+
+
+
+<h4> executeTrap.lua </h4>
+Deals with setting the execution limits, that specify how long the lua interpreter will run
+before aborting. This is useful to catch infinite loops.
+
+<blockquote>
+       executeTrap.limit
+</blockquote>
+<ul>
+<ul>
+    <li> Number of instructions that will be executed before aborting. Default is 10 million
+</ul>
+</ul>
+
+<blockquote>
+       executeTrap.frameLimit
+</blockquote>
+<ul>
+<ul>
+    <li> Number of instructions that will be executed before aborting while in onFrameCb(). Default is 1 million.
+</ul>
+</ul>
+
+
+<h4> partial.lua </h4>
+
+Defines some useful functions for partially executing code. This is useful if you want to split
+a calculation among several onFrameCb() calls, for example, without having to add explicit yielding.
+
+<blockquote>
+       createPartialCoroutine(func, instructions)
+</blockquote>
+<ul>
+<ul>
+    <li> Returns a function that, when called, will execute at most "instructions" instructions of "func", then yield. Subsequent calls to the function will resume from where it left off. Example:
+<pre>
+    function do_something()
+        for i=1,1000000 do
+            vprint(i.."\n")
+        end
+    end
+    
+    z = createPartialCoroutine(do_something, 1000)
+    
+    z() --executes 1000 instructions worth of func
+    z() --executes another 1000 instructions worth of func    
+</pre>    
+</ul>
+</ul>
+
+
+<blockquote>
+       createTimedPartialCoroutine(func, ms, resolution = 500)
+</blockquote>
+<ul>
+<ul>
+    <li> Returns a function that, when called, will execute "func" for at most "ms" milliseconds, then yield. Subsequent calls to the function will resume from where it left off.  Note that timing is not guaranteed to be accurate; resolution determines how many instructions will be called before testing the time again (smaller numbers mean more frequent tests).
+</ul>
+</ul>
+
+
+
+</ul>
+
+    </body>
+</html>
+

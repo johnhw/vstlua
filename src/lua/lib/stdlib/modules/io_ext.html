@@ -1,0 +1,76 @@
+<html><head></head><body>
+<p>
+I/O<br>
+</p><hr>
+<p>
+FIXME: Make this the __len metamethod<br>
+<strong>length:</strong> <em>Find the length of a file<br></em>
+&nbsp;&nbsp;<strong>f</strong>: file name<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>len</strong>: length of file, or nil on error<br>
+</p><hr>
+<p>
+FIXME: Use this POSIX implementation<br>
+require "posix"<br>
+function length (f)<br>
+ local s = posix.stat (f)<br>
+&nbsp;&nbsp;if s then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return s.size<br>
+&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return nil<br>
+&nbsp;&nbsp;end<br>
+end<br>
+</p><hr>
+<p>
+<strong>readLines:</strong> <em>Read a file into a list of lines and close it<br></em>
+&nbsp;&nbsp;<strong>[h]</strong>: file handle or name [io.input ()]<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>l</strong>: list of lines<br>
+</p><hr>
+<p>
+<strong>writeLine:</strong> <em>Write values adding a newline after each<br></em>
+&nbsp;&nbsp;<strong>[h]</strong>: file handle [io.output ()]<br>
+&nbsp;&nbsp;<strong>...</strong>: values to write (as for write)<br>
+</p><hr>
+<p>
+<strong>basename:</strong> <em>POSIX basename<br></em>
+&nbsp;&nbsp;@param path<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>base</strong>: base name<br>
+</p><hr>
+<p>
+<strong>dirname:</strong> <em>POSIX dirname<br></em>
+&nbsp;&nbsp;@param path<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>dir</strong>: directory component<br>
+</p><hr>
+<p>
+<strong>changeSuffix:</strong> <em>Change the suffix of a filename<br></em>
+&nbsp;&nbsp;<strong>from</strong>: suffix to change (".-" for any suffix)<br>
+&nbsp;&nbsp;<strong>to</strong>: suffix to replace with<br>
+&nbsp;&nbsp;<strong>name</strong>: file name to change<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>name_</strong>: file name with new suffix<br>
+</p><hr>
+<p>
+<strong>addSuffix:</strong> <em>Add a suffix to a filename if not already present<br></em>
+&nbsp;&nbsp;<strong>suff</strong>: suffix to add<br>
+&nbsp;&nbsp;<strong>name</strong>: file name to change<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>name_</strong>: file name with new suffix<br>
+</p><hr>
+<p>
+<strong>shell:</strong> <em>Perform a shell command and return its output<br></em>
+&nbsp;&nbsp;<strong>c</strong>: command<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>o</strong>: output, or nil if error<br>
+</p><hr>
+<p>
+<strong>processFiles:</strong> <em>Process files specified on the command-line<br></em>
+If no files given, process io.stdin; in list of files, "-" means<br>
+io.stdin<br>
+&nbsp;&nbsp;<strong>f</strong>: function to process files with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>name</strong>: the name of the file being read<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>i</strong>: the number of the argument<br>
+</p><hr>
+</body></html>

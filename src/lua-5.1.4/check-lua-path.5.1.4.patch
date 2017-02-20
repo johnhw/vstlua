@@ -1,0 +1,34 @@
+diff -urN lua-5.1.4/src/loadlib.c lua-5.1.4-patched/src/loadlib.c
+--- lua-5.1.4/src/loadlib.c	2008-08-06 15:29:28.000000000 +0200
++++ lua-5.1.4-patched/src/loadlib.c	2010-08-10 14:17:50.062500000 +0200
+@@ -626,6 +626,17 @@
+ 
+ LUALIB_API int luaopen_package (lua_State *L) {
+   int i;
++
++  /* LUA_PATH check modification */
++  const char *defaultPath;
++  lua_getglobal(L, "LUA_PATH");
++  
++  if(lua_isstring(L,-1))  
++    defaultPath = lua_tostring(L,-1);      
++  else
++    defaultPath = LUA_PATH_DEFAULT;
++  /* LUA_PATH check end */  
++
+   /* create new type _LOADLIB */
+   luaL_newmetatable(L, "_LOADLIB");
+   lua_pushcfunction(L, gctm);
+@@ -646,7 +657,11 @@
+     lua_rawseti(L, -2, i+1);
+   }
+   lua_setfield(L, -2, "loaders");  /* put it in field `loaders' */
+-  setpath(L, "path", LUA_PATH, LUA_PATH_DEFAULT);  /* set field `path' */
++  
++  /* LUA_PATH check modification */
++  setpath(L, "path", LUA_PATH, defaultPath);  /* set field `path' */
++  /* LUA_PATH end */
++  
+   setpath(L, "cpath", LUA_CPATH, LUA_CPATH_DEFAULT); /* set field `cpath' */
+   /* store config information */
+   lua_pushliteral(L, LUA_DIRSEP "\n" LUA_PATHSEP "\n" LUA_PATH_MARK "\n"

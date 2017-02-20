@@ -1,0 +1,1 @@
+%SWIG_PATH%\swig.exe -I%VSTSDK_BASE% -c++  -lua -o swig_gui.cpp swig_gui.i 

@@ -1,0 +1,135 @@
+<html>
+    <head>
+        <title>VstLua</title>
+         <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+<h2>Vst Lua</h2>
+<h5> Email: johnhw@gmailWASP.com minus the insect</h5>
+
+
+
+<img src="screen1.gif"> <br>
+The main GUI
+<br><br>
+<img src="screen2.gif"><br>
+A custom GUI in action (simple drum machine).
+
+<br><br><br>
+
+
+
+
+
+FAQ:
+<p />
+<ul>
+	<li>What does VstLua do?</li>
+<ul>
+	<li>It allows simple scripting of MIDI events in a VST. It does <i>not</i> have any audio manipulation facilities. It is purely for MIDI control.</li>
+<p />
+</ul>
+	<li>And why is that useful?</li>
+<ul>
+	<li>It replaces many custom VST MIDI manipulators with a quick and easy way of scripting MIDI events. It provides support</li>
+for limited GUI creation, so that scripts can set up their own control panels. New scripts can be quickly rapid
+prototyped without restarting the host.
+<p />
+</ul>
+	<li>For example?</li>
+<ul>
+	<li>Say, for example, I want add a new note, a fifth above the original, if the note is below middle C. All that is needed is a script like:</li>
+</ul>
+</ul>
+<blockquote>
+	function midiEventCb(midiEvent)
+<blockquote>
+<blockquote>
+	if midiEvent.type==midi.noteOn or midiEvent.type==midi.noteOff then                
+<blockquote>
+	local note = midiEvent.byte2                            
+	-- decide whether to transpose it up or down
+	if note&gt;=noteToNumber('C-5') then
+<blockquote>
+	note = midiEvent.byte2 + interval.fifth
+</blockquote>
+	else
+	   note = note - interval.fifth
+	end                
+	midiEvent.byte2=note            
+</blockquote>
+	end                
+	sendMidi(midiEvent)                    
+</blockquote>
+</blockquote>
+	end
+</blockquote>
+ See the <a href="vstluaapi.htp"> API </a> for details.
+<p />
+
+   
+
+<ul>
+	<li>What license is it under?</li>
+VstLua is released under a BSD license (as is Lua itself). The source code is provided.
+<p />
+	<li>Copyright (c) 2007, John Williamson</li>
+	<li>All rights reserved.</li>
+<b>
+	<li>Redistribution and use in source and binary forms, with or without</li>
+	<li>modification, are permitted provided that the following conditions are met:</li>
+	<li>    </b> Redistributions of source code must retain the above copyright</li>
+	<li>      notice, this list of conditions and the following disclaimer.</li>
+	<li>    * Redistributions in binary form must reproduce the above copyright</li>
+	<li>      notice, this list of conditions and the following disclaimer in the</li>
+	<li>      documentation and/or other materials provided with the distribution.</li>
+	<li>    * Neither the name of the &lt;organization&gt; nor the</li>
+	<li>      names of its contributors may be used to endorse or promote products</li>
+	<li>      derived from this software without specific prior written permission.</li>
+<b>
+	<li>THIS SOFTWARE IS PROVIDED BY &lt;copyright holder&gt; ``AS IS'' AND ANY</li>
+	<li>EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</li>
+	<li>WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</li>
+	<li>DISCLAIMED. IN NO EVENT SHALL &lt;copyright holder&gt; BE LIABLE FOR ANY</li>
+	<li>DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</li>
+	<li>(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</li>
+	<li>LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</li>
+	<li>ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</li>
+	<li>(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</li>
+	<li>SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</b>*</li>
+<p />
+<p />
+	<li>Why aren't there many scripts?</li>
+<ul>
+	<li>Because you haven't written them yet! If you write a useful script, <i>please</i> send it to me so</li>
+I can include it the next release.
+<p />
+</ul>
+	<li>Why Lua? Why not Python/Ruby/Java/Lisp...?</li>
+<ul>
+	<li>Lua is comparitively very efficient.</li>
+	<li>Lua is very lightweight. Nobody wants to deal with setting up Java just to get a plugin to work. Lua just compiles in nicely.</li>
+	<li>Lua has a very simple syntax. </li>
+<p />
+</ul>
+	<li>It would be really nice if GUI control XXX was added!</li>
+<ul>
+	<li>If you have a good idea of how a new GUI control could be used, let me know. However, it's a lot</li>
+of work to a add new control, so it might not happen...
+<p />
+</ul>
+	<li>Uhh, the GUI controls all reset to their original values when I close the VST window.</li>
+<ul>
+	<li>That's supposed to happen. If you want the values to persist, copy them to and from the</li>
+VSTParameters. See scripts/drummachine.lua for an example.
+<p />
+</ul>
+	<li>It crashes my host!</li>
+<ul>
+	<li>Well, it's a beta, and there are probably lots of bugs. Please send me details of (a) which host you are using and <br> (b) which script you were using and (c) what exactly happens.</li>
+<p />
+</ul>
+</ul>
+<a href="vstlua.zip"> <h3> DOWNLOAD IT </h3> </a>
+    </body>
+</html>

@@ -1,0 +1,38 @@
+<html><head></head><body>
+<p>
+Prototype-based objects<br>
+</p><hr>
+<p>
+Usage:<br>
+</p><hr>
+<p>
+Create an object/class:<br>
+&nbsp;&nbsp;object/class = parent {value, ...; field = value ...}<br>
+&nbsp;&nbsp;An object's metatable is itself.<br>
+&nbsp;&nbsp;In the initialiser, unnamed values are assigned to the fields<br>
+&nbsp;&nbsp;given by _init (assuming the default _clone).<br>
+&nbsp;&nbsp;Private fields and methods start with "_"<br>
+</p><hr>
+<p>
+Access an object field: object.field<br>
+Call an object method: object:method (...)<br>
+Call a class method: class.method (self, ...)<br>
+</p><hr>
+<p>
+Add a field: object.field = x<br>
+Add a method: function object:method (...) ... end<br>
+</p><hr>
+<p>
+Root object<br>
+</p><hr>
+<p>
+<strong>Object:_clone:</strong> <em>Object constructor<br></em>
+&nbsp;&nbsp;<strong>values</strong>: initial values for fields in<br>
+&nbsp;&nbsp;_init<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>object</strong>: new object<br>
+</p><hr>
+<p>
+<strong>Object:__call:</strong> <em>Sugar instance creation<br></em>
+</p><hr>
+</body></html>

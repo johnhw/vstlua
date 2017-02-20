@@ -1,0 +1,365 @@
+﻿
+<html>
+    <head>
+        <title>VstLua Quickstart</title>
+         <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+<h1> QuickStartLua </h1>
+
+
+<h3> Basics </h3>
+Here's a quick guide to setting up a VstLua script. Read <a href="luaquick.html"> the Lua guide </a> if you want a
+quick introduction to the basics of Lua itself. 
+
+<h4> Setting Up </h4>
+First of all, you need to get VSTLua into your host, and get it to process MIDI messages. This might be very easy (e.g. in energyXT, just add it and connect up the ports, or add into the FX chain in Reaper), or rather more involved (e.g. in Live). For some idea of how to do it for your host, have a look at the <a href ="http://www.mucoder.net/tonespace/tonespace_user_manual.htm#_Toc150632284"> ToneSpace guide </a>.
+
+
+<br> If you can't use MIDI plugins with your host, you may still be able to use VSTLua by routing MIDI via a loopback device. In this case, the best way to do is to use SaviHost. Copy savihost.exe to vstlua.exe and copy in beside vstlua.dll. Now it vstlua.exe will work like a standalone VSTLua. Make sure you have a MIDI loopback installed (or example <a href="http://www.midiox.com/index.htm?http://www.midiox.com/myoke.htm"> MIDI Yoke</a>), and you can route midi from input devices/output from your host, to VSTLua, and then (back) to your host.
+<br><br>
+<br> Once you've got it running, test that MIDI is being passed through. VSTLua works like a MIDI Thru when no script is loaded. The "Midi In" and "Midi Out" buttons should light up as you send MIDI events (either via a controller like a keyboard, or from the sequencer). 
+
+<br><br>
+Now, we're ready to get scripting! Use the "Load" button to load a script (try chord.lua, in the scripts/ directory). When you send MIDI now, each note will be replaced by a chord. If you switch to the GUI pane (click on the bar on the left) then you can select the chord from a drop down list. 
+
+
+
+<h4> Scripting </h4>
+If at any time you get an error, a message will be printed in red in the lower message window. The script will halt (all callbacks will stop), and the "Reset" button will light up. If you correct the error (e.g. by editing the script)  and press Reset, the script will be reloaded and reinitialised. 
+
+You can easily edit the Lua scripts; just open with any text editor (Notepad will work, but <a href="http://notepad-plus.sourceforge.net/uk/site.htm"> Notepad++ </a> is MUCH better and is free) and edit away.
+
+
+<h4> Printing messages </h4>
+Quick note: it's very useful to 
+be able to print debug messages when working with VstLua. You can use print() to do this:
+<pre>
+print("Hello, world!")
+</pre>
+will write <i>Hello, world</i> out to the main message window. 
+<br>
+
+
+
+<h3> Callbacks </h3>
+
+VstLua is based around callbacks, functions which get called regularly by the plugin itself. To define a new callback, just define a function with the appropriate name, and it will automatically get called at the right times.
+
+<h4> Example: Midi callbacks </h4>
+Every time VstLua receives a note, a function called midiEventCb is called. If you define
+a function with that name, the midi will be passed to it.
+
+Just copy the following into a file called transpose_notes.lua and you can
+open it from VSTLua:
+
+<pre>
+--this function transposes notes up by a fifth
+function midiEventCb(event)
+
+    --if it's a note event
+    if event.type == midi.noteOn or event.type == midi.noteOff    
+        --transpose by seven semitones (a fifth)
+        event.byte2 = event.byte2 + 7
+    end
+    
+    --send on the note
+    sendMidi(event)
+end
+</pre>
+
+The "event" argument to midiEventCb has a bunch of fields. The most important are:
+<ul>
+<li> type: midi event code. Compare this against values of the "midi" table. midi.noteOn, for
+example, is the code for note on events (funnily enough). The list of codes is in <tt>lua/midi.lua</tt>
+
+<li> channel: midi channel, 0--15
+
+<li> byte2: this holds the first part of a midi message (it's called byte2 because it's the second
+byte of the actual midi message). For notes, this is the number. For CCs it's the controller number.
+
+<li> byte3: second part of the message. For notes, it's velocity. For CCs it's the new value of the controller.
+
+<li> delta: this is the offset of this note in samples from the start of this processing frame. It'll usually be zero for live-played notes, but for sequenced notes, it's important for
+getting the timing dead-on.
+</ul>
+
+The sendMidi function just passes a midi event onto the host. You can either modify
+an incoming message (like above) or create new ones with the functions in <tt> lua/midi.lua</tt>, such
+as noteOn(note, velocity, channel) and cc(controller, value, channel). 
+<br><br>
+Now, if you want to send a note after some delay,  use the scheduleEvent function
+instead (in fact, it's always safe to use scheduleEvent in place of sendMidi). If you
+use scheduleEvent, you can add any value to the event.delta value, and the message
+will be sent at the correct time. So you could delay a note by 5000 samples just by doing:
+<pre>
+event.delta = event.delta+5000
+scheduleEvent(event)
+</pre>
+
+
+<h3> Timing </h3>
+
+To do things with a timing element, such as playing a note repeatedly, you have
+to send messages on a regular basis. The place to do this is in the onFrameCb()
+handler. Just define a function called onFrameCb, and it will be called every time
+the host processes a frame of audio data. Example:
+
+<pre>
+function onFrameCb()
+
+    --send middle C at max velocity every frame
+    ev = noteOn(60, 127, 0)
+    sendMidi(ev)
+    
+end
+</pre>
+which sends a note every frame. You can always get the current frame length from the global variable VSTFrameLength. However, since frame lengths are variable, timing things like this isn't
+a great deal of use. 
+
+If you want to do things which are musically timed (i.e. synced to the host), there are some useful functions for timing defined in <tt>lua/timing.lua</tt>. The most useful is
+<pre>
+beatlen, beatnumber, timetobeat= computeBeatTime(sampletime, tempo, samplerate, fraction)
+</pre>
+which takes the tempo, samplerate and sampletime from the host (more on how to get those later), which fraction of a beat you want (e.g. 0.25=1 quarter note) and returns the length of one beat (in samples), the "number" of the beat (i.e. how many complete beats have passed), and the time in samples to the next beat (which is useful for setting event deltas).
+
+The tempo, samplerate and sampletime are all part of the hosttime table returned by getHostTime(). So the following sends an event every beat, no matter how long the frame is.
+
+<pre>
+function onFrameCb()
+    hosttime = getHostTime()
+    --compute the beat properties
+    beatlen,number,timetobeat = computeBeatTime(hosttime.samplePos, hosttime.tempo, hosttime.sampleRate, 0.25)
+    
+    --will this note be played in this frame?
+    if timetobeat &lt; VSTFrameLength then
+    
+        --middle C at max veloctiy 
+        ev = midi.noteOn(60, 127, 0)
+        
+        --set the delta to the exact time to the beat
+        ev.delta = timetobeat
+        
+        sendMidi(ev)  
+        
+    end
+    
+end
+</pre>
+
+
+The problem with the above is that it never sends any note offs. We could add some variables to record the last on time, wait until enough time has passed and send the note off event, but that's rather complicated. The much easier way to do it is to use scheduleEvent(), which will send events at the right time. Example:
+
+<pre>
+function onFrameCb()
+
+    hosttime = getHostTime()
+    
+    --compute the beat properties
+    beatlen,number,timetobeat = computeBeatTime(hosttime.samplePos, hosttime.tempo, hosttime.sampleRate, 0.25)
+    
+    --will this note be played in this frame?
+    if timetobeat &lt; VSTFrameLength then
+    
+        --middle C at max veloctiy 
+        ev = midi.noteOn(60, 127, 0)
+        
+        --set the delta to the exact time to the beat
+        ev.delta = timetobeat
+        
+        --we could use sendMidi here, but scheduleEvent can be
+        --dropped in anywhere sendMidi is used
+        scheduleEvent(ev)                     
+
+        --send a note off 1 beat later
+        ev_off = midi.noteOff(60, 0)
+        ev_off.delta = timetobeat + beatlen
+        
+        --schedule it
+        scheduleEvent(ev_off)
+        
+    end
+    
+end
+</pre>
+
+Let's look at a more complex example, a MIDI looper. We want to read in data while the user plays, then continuously play that back until the next recording. The user can control recording using the sustain pedal, CC 64.<br><br>
+
+The user holds down the pedal and plays notes (and hears them at the same time). The user releases and the loop starts playing, until the next time the pedal goes down. Here's the script, fully commented:
+
+<pre>
+
+
+--initialise variables
+
+
+recording = false --whether or not we're not recording
+
+loop = {}         --this will store the MIDI data
+
+baseTime = 0      --records the exact time since the start of the last frame 
+                  --that the pedal went down
+                  
+curTime = 0       --the current time pointer into the loop; 
+                  --i.e. how far we have progressed so far. Measured in samples.
+
+
+                  
+--handle each MIDI event we get                 
+function midiEventCb(event)
+
+    
+    --if the event is a sustain pedal event
+    if event.type==midi.cc and event.byte2==midicc.sustain then
+        --record when sustain goes high (>64), and stop when it goes low
+        
+        if event.byte3>64 then
+          startRecording(event)
+        else
+          stopRecording(event)
+          
+        end
+    else
+        --OK, this is a note or some other controller
+        --if we're recording, put it in the loop
+        if recording==true then
+           addToLoop(event)
+           sendMidi(event) -- and echo through...
+        end
+        
+        --note that we don't send the note through
+        --if we're not recording!
+    end
+end
+   
+
+--every frame, record the advance of one frame    
+function onFrameCb()       
+  loopAdvance(VSTFrameLength)  
+  
+                  
+--Start recording a sequence; the user has depressed the pedal
+function startRecording(event)
+    loop = {}              -- clear the loop
+    recording = true       -- flag recording mode
+    baseTime = event.delta -- store the exact offset of the pedal down
+    curTime = 0            -- reset the loop time
+end
+
+
+--Stop recording; the user has released the pedal
+function stopRecording(event)
+    recording = false      
+    curTime = 0            -- reset the time to the start of the loop
+end
+
+
+--This will be called every frame. It advances the loop by one frame, whether
+--we're recording or playing
+function loopAdvance(samples)
+    
+
+    --if we're not recording, we're playing
+    if not recording then
+           
+           --record the last time played
+           maxtime = 0
+           
+            --for each recorded note in the loop
+            for i,v in ipairs(loop) do
+            
+                --v[1] is the time of the event (relative to the start of the loop)
+                t = v[1]
+                
+                --v[2] is the event itself
+                m = v[2]
+                
+                --does this note occur in this frame?
+                if t &gt= curTime and t &lt curTime+samples then
+                    --copy the event (we must do this, because otherwise we'll modify
+                    --the original event!)
+                    
+                    c = copyMidiEvent(m)  
+                    
+                    --delta is the difference between the play time
+                    --and the current position
+                    
+                    c.delta = t-curTime       
+                    
+                    --send the event
+                    
+                    sendMidi(c)
+                end
+                
+                
+                --this records the time of the very last note in the sequence
+                if t>maxtime then
+                    maxtime = t
+                end
+                
+            end
+            
+            --loop back to zero if we've passed the end of the sequence
+            if curTime>maxtime then
+                
+                --adjust the time because we'll have overshot by a few samples
+                curTime = maxtime-curTime
+            end
+            
+        end
+    end
+                
+    
+      --advance the current time by one frame
+      curTime = curTime + samples    
+
+end
+
+--insert a new event into the buffer
+function addToLoop(event)
+    --just append a pair to the current loop; time since start of loop, and the event itself
+    table.insert(loop, {curTime+event.delta, event})
+end
+
+
+
+
+</pre>
+
+
+<h3> GUIs </h3>
+
+VstLua aims to make it trivial to add simple controls to dynamically adjust parameters of your scripts. Here's a very simple example.
+<pre>
+
+button = addControl{x=50, y=50, type=GUITypes.onOffButton, label="Switch", callback = doswitch}
+
+--print out the value every time it changes
+function doswitch(value)
+    print("Button is now "..value)
+end
+</pre>
+This adds a simple on/off toggle button. doswitch() will be called every time the value of the control changes (here, when the button is pressed). Try adding this to your script and then pressing the button marked "GUI" at the top-left.
+See the <a href="VstLuaApi.html"> API docs </a> for the different type of controls you can add.<br><br>
+
+If you want to read or write its value at any time, just use the value field:
+
+<pre>
+print("Button value is"..button.value)
+
+--turn the button on
+--NB this won't call the callback for value changes
+button.value = 1
+</pre>
+<br>
+
+There are many other control types, all of which are used the same way. Try creating a knob by changing the type to "GUITypes.knob". You can set the maximum and minimum values of the knob by setting the "min" and "max" fields when you create the control:
+<pre>
+
+knob = addControl{x=50, y=50, min=100, max=500, type=GUITypes.knob, label="Knob", callback = function(value) print("Knob is "..value) end}
+
+</pre>
+
+
+</body>
+</html>

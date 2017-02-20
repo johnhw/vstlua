@@ -1,0 +1,213 @@
+﻿<html>
+    <head>
+        <title>Lua Guide</title>
+         <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+    
+<h1> A quick guide to Lua </h1>
+
+
+First of all, look at "Programming in Lua" at <a href="http://www.lua.org/pil/"> http://www.lua.org/pil/ </a>. Read up
+on tables, as these are the basic type for everything in Lua.
+<br><br>
+But, if you want a a quick start, here you go:
+
+<h3> Statements </h3>
+Statements in Lua have no braces or semicolons, and whitespace
+is not significant. Instead, statements like <tt>if ... then </tt>
+use <tt>end</tt> to terminate a block. Example:
+<pre>
+--print something out!
+if note==5 then
+   print("Note was five!")
+end
+</pre>
+ Note that comments begin with two dashes.
+<br><br>
+
+
+<h3> Types </h3>
+Lua's basic types are numbers (Lua does not distinguish between
+integers and floats), strings (which are immutable) and tables, which are
+used for all data structures. Lua is dynamically-typed, and variables are not declared before use. Simply assign to them
+to start using them. <br><br>NOTE: by default all Lua variables are global! To use a local variable, you must declare it using <tt>local</tt>:
+<pre>
+x = 5
+
+function dostuff()
+    x = x + 1 -- changes global x
+    local y
+    y = 5     -- y is only visible in this scope
+end
+
+</pre>
+Any parameters  are automatically local, as are variables used in for loops (see later).
+
+
+<br><br>
+Numbers are pretty standard. +,-,*,/,%,^ can all be used to manipulate them (^ is exponentation,
+not XOR). 
+
+<br><br> Comparisons are like most other languages.
+<br><br>
+Strings are also fairly standard. They can concatenated with <tt>..</tt>. Slices can be made with <tt>string.sub(string, start, end)</tt>. There is some support for pattern matching/replacement, but not full regexp support.
+<br><br>
+
+
+<h3> Functions </h3>
+
+Lua functions are defined with the <tt>function</tt> keyword and are terminated with end. Example:
+<pre>
+function dosomething(x,y,z)
+    print("X is "..x.." and y is "..y.." and z is "..z)
+end
+</pre>
+
+Functions are first class in Lua, so you can store them in tables
+(you can even index tables with functions!). 
+
+<pre>
+function do_something_one(one, two)
+   vprint(one)
+end
+
+function do_something_two(one, two)
+   vprint(two)
+end
+
+ftable = {one = do_something_one, two = do_something_two}
+
+ftable.one("hello", "there")
+ftable.two("hello", "there")
+</pre>
+
+<br>
+Note for functional programmers: Lua supports closures and anonymous functions:
+<pre>
+function returnfunc(y)
+    local x = 10
+    return function() print(x) x = x + y end
+end
+
+z = returnfunc(1)
+z() -- prints 10
+z() -- prints 11
+z() -- prints 12
+
+z = returnfunc(3)
+z() -- prints 10
+z() -- prints 13
+z() -- prints 16
+</pre>
+
+
+
+<h3> Tables </h3>
+Tables are actually hashtables and can
+be indexed with any Lua type, not just integers. They are extremely powerful and 
+form Lua's basic data type. Tables can be constructed literally:
+<pre>
+notes = {C=0, D=2, E=4, F=5}
+</pre>
+If the index is a string you can use . notation as in <tt>notes.C</tt>
+or you can use square brackets: <tt>notes["C"]</tt>
+<br>
+If you don't specify keys:
+<pre>
+notes = {0,2,4,5}
+</pre>
+tables will be indexed like an array (but starting at 1 (<b>one</b>) not zero -- Lua
+is always 1-indexed). So you can do
+<pre>
+vprint("notes[1]="..notes[1])
+</pre>
+Lua automatically converts strings to numbers and vice-versa, so it is safe to concatenate a number and a string together.
+<br>
+You could also specifically give numerical indices:
+<pre>
+notes = {[1]=0, [7]=2, [13]=4,[19]=5}
+</pre>
+But note that you must put [] around the keys in this case. Tables are <b> always </b> accesed
+by reference, not value (the same is true for strings, but since they are immutable, this is of little consequence). If you want a copy, you need to write a copy function!
+<br><br>
+Tables can be nested. This makes it easy to represent things like lists:
+<pre>
+
+function addToList(element, list)
+    --list must be a list or nil
+    if not list then
+        return {head=element, tail=nil}
+    else
+        addToList(list.tail, element)    
+    end
+end
+
+function printList(list)
+    if not list then 
+        return 
+    else
+        print(list.head.." ")
+        printList(list.tail)
+    end       
+end
+
+
+l = addToList(1) --nb: omitted parameters just become nil
+addToList(2,l)
+addToList(3,l)
+
+printList(l) -- result: 1 2 3
+
+</pre>
+
+
+<H3> Iteration </H3>
+Simple for loops are easy:
+<pre>
+for i=1,10 do
+ ... stuff ..
+end
+</pre>
+
+You can give a third parameter if you want to specify a step:
+<pre>
+for i=1,10,2 do
+    ...stuff...
+end
+</pre>
+
+while loops are easy too:
+<pre>
+x = 0
+while x&lt;5 do
+    x = x + 1
+end
+</pre>
+
+Note that you need to have the <tt>do</tt> at the end of the while statement! There's also repeat...until:
+
+<pre>
+x = 0
+repeat
+   x = x + 1
+until x==5
+</pre>
+To iterate over a table, use pairs:
+<pre>
+for key,value in pairs(notes) do
+    vprint(key.." = "..value)
+end
+</pre>
+If you want to iterate over numerical keys in order, use ipairs:
+<pre>
+for i, value in ipairs(notes) do
+    vprint(i.." = "..value)
+end
+</pre>
+This will ignore any non-numeric keys but will iterate
+through the numerical ones in ascending order. 
+<br><br>
+
+</body>
+</html>

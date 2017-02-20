@@ -1,0 +1,96 @@
+BODY {
+	font-family: Arial; font-size: 90%;
+    background-color: #F4F4F0;
+
+    
+    width: 800px;
+    padding-left: 120px;
+    padding-right: 120px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    
+    
+    
+}
+
+a:link {
+    color: f09020;
+}
+
+a:visited {
+    color: 907020;
+}
+
+
+h3{
+    background: #f0e0b0;
+    padding-left: 10px;
+
+    #border: 5px solid  rgb(190,190,190);
+
+}
+
+h4{
+    background: #f0e0b0;
+    padding-left: 10px;
+    
+    #border: 5px solid  rgb(190,190,190);
+
+}
+
+pre
+{
+    color: #056005;
+    font-family: Lucida Console, Courier, Fixed;
+    background-color: #ffffff;
+    margin-left: 40px;
+    margin-right: 80px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left:10px;
+    border: 1px solid rgb(188,188,188);
+
+}
+
+h2{
+    
+    padding-left: 0px;
+
+    
+
+}
+
+
+ul
+{
+list-style-type: none;
+}
+
+blockquote 
+{
+
+    font-weight: bold;
+    
+}
+
+
+.wiki-name-ref {
+	color: #888888; font-size: 75%;
+}
+
+.parent-nodes {
+	color: #888888; font-size: 75%;
+}
+
+.property {
+	color: #888888; font-size: 75%;
+}
+
+.script {
+	color: #888888; font-size: 75%;
+}
+
+.todo {
+	font-weight: bold;
+}
+

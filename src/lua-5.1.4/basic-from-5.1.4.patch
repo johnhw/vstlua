@@ -1,0 +1,140 @@
+diff -urN lua-5.1.4/src/lparser.c lua-5.1.4-patched/src/lparser.c
+--- lua-5.1.4/src/lparser.c	2007-12-28 15:32:22.000000000 +0100
++++ lua-5.1.4-patched/src/lparser.c	2010-08-08 22:49:23.812500000 +0200
+@@ -928,8 +928,32 @@
+ }
+ 
+ 
+-static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
++static void getfrom (LexState *ls, expdesc *e, expdesc *v)
++{
++  expdesc key;
++  int k = v->k;
++
++  if (k == VLOCAL) {
++    codestring(ls, &key, getlocvar(ls->fs, v->u.s.info).varname);
++  }
++  else if (k == VUPVAL) {
++    codestring(ls, &key, ls->fs->f->upvalues[v->u.s.info]);
++  }
++  else if (k== VGLOBAL) {
++    init_exp(&key, VK, v->u.s.info);
++  }
++  else {
++    check_condition(ls, VLOCAL <= k && k <= VGLOBAL,
++                        "syntax error in from vars");
++  }
++  luaK_indexed(ls->fs, e, &key);
++}
++
++static int assignment (LexState *ls, struct LHS_assign *lh, int nvars,
++                       lu_byte *from_var) {
+   expdesc e;
++  int from = 0;
++
+   check_condition(ls, VLOCAL <= lh->v.k && lh->v.k <= VINDEXED,
+                       "syntax error");
+   if (testnext(ls, ',')) {  /* assignment -> `,' primaryexp assignment */
+@@ -940,12 +964,28 @@
+       check_conflict(ls, lh, &nv.v);
+     luaY_checklimit(ls->fs, nvars, LUAI_MAXCCALLS - ls->L->nCcalls,
+                     "variables in assignment");
+-    assignment(ls, &nv, nvars+1);
++    from = assignment(ls, &nv, nvars+1, from_var);
+   }
+-  else {  /* assignment -> `=' explist1 */
++  else {  /* assignment -> IN primaryexp | `=' explist1 */
+     int nexps;
++
++    if (testnext(ls, TK_IN)) {
++      new_localvarliteral(ls, "(from)", 0);
++      primaryexp(ls, &e);
++      luaK_exp2nextreg(ls->fs, &e);
++      *from_var = ls->fs->nactvar;
++      adjustlocalvars(ls, 1);
++
++      luaK_setoneret(ls->fs, &e);  /* close last expression */
++      getfrom(ls, &e, &lh->v);
++      luaK_storevar(ls->fs, &lh->v, &e);
++      return 1;  /* avoid default */
++    }
++    else {
+     checknext(ls, '=');
+-    nexps = explist1(ls, &e);
++    nexps = explist1(ls, &e);
++    }
++
+     if (nexps != nvars) {
+       adjust_assign(ls, nvars, nexps, &e);
+       if (nexps > nvars)
+@@ -954,11 +994,13 @@
+     else {
+       luaK_setoneret(ls->fs, &e);  /* close last expression */
+       luaK_storevar(ls->fs, &lh->v, &e);
+-      return;  /* avoid default */
++      return 0;  /* avoid default */
+     }
+   }
+   init_exp(&e, VNONRELOC, ls->fs->freereg-1);  /* default assignment */
++  if (from) getfrom(ls, &e, &lh->v);
+   luaK_storevar(ls->fs, &lh->v, &e);
++  return from;
+ }
+ 
+ 
+@@ -1177,13 +1219,41 @@
+ 
+ 
+ static void localstat (LexState *ls) {
+-  /* stat -> LOCAL NAME {`,' NAME} [`=' explist1] */
++  /* stat -> LOCAL NAME {`,' NAME} [ IN primaryexp | `=' explist1] */
+   int nvars = 0;
+   int nexps;
+   expdesc e;
+   do {
+     new_localvar(ls, str_checkname(ls), nvars++);
+-  } while (testnext(ls, ','));
++  } while (testnext(ls, ','));
++
++  if (testnext(ls, TK_IN)) {
++    lu_byte from_var;
++    int regs = ls->fs->freereg;
++    int vars = ls->fs->nactvar;
++
++    luaK_reserveregs(ls->fs, nvars);
++    adjustlocalvars(ls, nvars);
++
++    new_localvarliteral(ls, "(from)", 0);
++    primaryexp(ls, &e);
++    luaK_exp2nextreg(ls->fs, &e);
++    from_var = ls->fs->nactvar;
++    adjustlocalvars(ls, 1);
++    luaK_setoneret(ls->fs, &e);  /* close last expression */
++
++    for (nexps=0; nexps<nvars; nexps++) {
++      expdesc v, key;
++      init_exp(&e, VNONRELOC, ls->fs->freereg-1);
++      codestring(ls, &key, getlocvar(ls->fs, vars+nexps).varname);
++      luaK_indexed(ls->fs, &e, &key);
++      init_exp(&v, VLOCAL, regs+nexps);
++      luaK_storevar(ls->fs, &v, &e);
++    }
++    removevars(ls, from_var);
++    return;
++  }
++
+   if (testnext(ls, '='))
+     nexps = explist1(ls, &e);
+   else {
+@@ -1229,8 +1299,10 @@
+   if (v.v.k == VCALL)  /* stat -> func */
+     SETARG_C(getcode(fs, &v.v), 1);  /* call statement uses no results */
+   else {  /* stat -> assignment */
++    lu_byte from_var;
+     v.prev = NULL;
+-    assignment(ls, &v, 1);
++    if (assignment(ls, &v, 1, &from_var))
++      removevars(ls, from_var);
+   }
+ }
+ 

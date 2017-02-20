@@ -1,0 +1,155 @@
+<html><head></head><body>
+<p>
+<h1>table<br></h1>
+</p><hr>
+<p>
+require "list" FIXME: allow require loops<br>
+</p><hr>
+<p>
+<strong>sort:</strong> <em>Make table.sort return its result<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+&nbsp;&nbsp;<strong>c</strong>: comparator function<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>t</strong>: sorted table<br>
+</p><hr>
+<p>
+<strong>subscript:</strong> <em>Expose [] as a function<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+&nbsp;&nbsp;<strong>s</strong>: subscript<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>v</strong>: t[s]<br>
+</p><hr>
+<p>
+<strong>lookup:</strong> <em>Do a late-bound table lookup<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table to look up in<br>
+&nbsp;&nbsp;<strong>l</strong>: list of indices {l1 ... ln}<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: t[l1]...[ln]<br>
+</p><hr>
+<p>
+<strong>pathSubscript:</strong> <em>Subscript a table with a string containing<br></em>
+dots<br>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+&nbsp;&nbsp;<strong>s</strong>: subscript of the form s1.s2. ... .sn<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>v</strong>: t.s1.s2. ... .sn<br>
+</p><hr>
+<p>
+<strong>empty:</strong> <em>Say whether table is empty<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>f</strong>: true if empty or false otherwise<br>
+</p><hr>
+<p>
+<strong>size:</strong> <em>Find the number of elements in a table<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>n</strong>: number of elements in t<br>
+</p><hr>
+<p>
+<strong>indices:</strong> <em>Make the list of indices of a table<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: list of indices<br>
+</p><hr>
+<p>
+<strong>values:</strong> <em>Make the list of values of a table<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: list of values<br>
+</p><hr>
+<p>
+<strong>invert:</strong> <em>Invert a table<br></em>
+&nbsp;&nbsp;<strong>t</strong>: table {i=v ...}<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: inverted table {v=i ...}<br>
+</p><hr>
+<p>
+<strong>permute:</strong> <em>Permute some indices of a table<br></em>
+&nbsp;&nbsp;<strong>p</strong>: table {oldindex=newindex ...}<br>
+&nbsp;&nbsp;<strong>t</strong>: table to permute<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: permuted table<br>
+</p><hr>
+<p>
+<strong>process:</strong> <em>map a function over a table using an iterator<br></em>
+&nbsp;&nbsp;<strong>it</strong>: iterator<br>
+&nbsp;&nbsp;<strong>f</strong>: function<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>a</strong>: accumulator<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>i</strong>: index<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>v</strong>: value<br>
+&nbsp;&nbsp;<strong>returns</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>b</strong>: updated accumulator<br>
+&nbsp;&nbsp;<strong>a</strong>: initial value of the accumulator<br>
+&nbsp;&nbsp;<strong>t</strong>: table to iterate over<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>a</strong>: final value of the accumulator<br>
+</p><hr>
+<p>
+<strong>mapItem:</strong> <em>map primitive for table.process<br></em>
+&nbsp;&nbsp;@f: function<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;@g: function to pass to process to map a single item<br>
+</p><hr>
+<p>
+<strong>filterItem:</strong> <em>filter primitive for table.process<br></em>
+&nbsp;&nbsp;@f: predicate<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;@g: function to pass to process to filter a single item<br>
+</p><hr>
+<p>
+<strong>foldlItem:</strong> <em>foldl primitive for table.process<br></em>
+&nbsp;&nbsp;@f: function<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;@g: function to pass to process to foldl a single item<br>
+</p><hr>
+<p>
+<strong>foldrItem:</strong> <em>foldr primitive for table.process<br></em>
+&nbsp;&nbsp;@f: function<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;@g: function to pass to process to foldr a single item<br>
+</p><hr>
+<p>
+<strong>map:</strong> <em>Map a function over a table<br></em>
+&nbsp;&nbsp;<strong>f</strong>: function<br>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>m</strong>: result table {f (t[i1])...}<br>
+</p><hr>
+<p>
+<strong>filter:</strong> <em>Filter a table with a predicate<br></em>
+&nbsp;&nbsp;<strong>p</strong>: predicate<br>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>m</strong>: result table containing elements e of t for which p (e)<br>
+</p><hr>
+<p>
+<strong>clone:</strong> <em>Make a shallow copy of a table, including any<br></em>
+metatable<br>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: copy of table<br>
+</p><hr>
+<p>
+<strong>deepclone:</strong> <em>Make a deep copy of a table, including any<br></em>
+ metatable<br>
+&nbsp;&nbsp;<strong>t</strong>: table<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: copy of table<br>
+</p><hr>
+<p>
+<strong>merge:</strong> <em>Merge two tables<br></em>
+If there are duplicate fields, u's will be used. The metatable of<br>
+the returned table is that of t<br>
+&nbsp;&nbsp;<strong>t, u</strong>: tables<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>r</strong>: the merged table<br>
+</p><hr>
+<p>
+<strong>newDefault:</strong> <em>Make a table with a default value<br></em>
+&nbsp;&nbsp;<strong>x</strong>: default value<br>
+&nbsp;&nbsp;<strong>[t]</strong>: initial table [{}]<br>
+<strong>returns</strong><br>
+&nbsp;&nbsp;<strong>u</strong>: table for which u[i] is x if u[i] does not exist<br>
+</p><hr>
+</body></html>

@@ -1,0 +1,177 @@
+<html>
+    <head>
+        <title>VstLuaApi</title>
+         <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+<h2>Example Scripts</h2>
+There are a bunch of scripts included with VstLua. Most of these are intended as examples, so that
+you can see how to build your own, rather than complete, useful entities in their own right. Scripts
+that are host-synced (and therefore need the host to be running to do anything) are marked <i> HostSync </i>.
+
+<br>
+
+
+<h3> scripts/ </h3>
+
+<ul>
+<li> <b><a href="scripts/arpeg.lua"> arpeg.lua </a> </b> Simple arpeggiator. Press notes on your MIDI keyboard and they'll be arpeggiated. Set the speed from the GUI. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/ccquantize.lua"> ccquantize.lua </a> </b> Quantizes all incoming CCs to steps of 32.
+<br><br>
+<li> <b><a href="scripts/ccremap.lua"> ccremap.lua </a> </b> Shows how to remap CCs. Just maps 1->74 and 2->75. Only needs 10 lines of code!
+<br><br>
+<li> <b><a href="scripts/ccsmooth.lua"> ccsmooth.lua </a> </b> Filters all CCs with an exponential smooth.
+
+<br><br>
+<li> <b><a href="scripts/chord.lua"> chord.lua </a> </b> Plays chords. Press a note on your MIDI keyboard chord notes will be added. Select chord types from the GUI.
+<br><br>
+
+<li> <b><a href="scripts/complex_drummachine.lua"> complex_drummachine.lua </a> </b> Like <tt>drummachine.lua</tt>, but has multiple drum channels. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/drummachine.lua"> drummachine.lua </a> </b> Very simple drum machine. Set the pattern (in 16th notes) in the GUI. Plays C-3 at those times. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/dualfo.lua"> dualfo.lua </a> </b> LFO example, with a pair of LFO's, one modulating the other. The output affects CC74. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/forcetoscale.lua"> forcetoscale.lua </a> </b> Shows how to force MIDI notes to a given scale. Select mode/key from the GUI panel; MIDI notes will be forced to the nearest note which is in key.
+<br><br>
+<li> <b><a href="scripts/graphical_groove.lua"> graphical_groove.lua </a> </b> Basic groove editor (like energyXT's MIDI groove effect). In the GUI panel, you can set note delay (first row) and note velocity gain (second row) for each 16th note. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/groove.lua"> groove.lua </a> </b> Simple groove effect. Adds groove to notes C-3 (bassdrum) and F#3 (hihat), but no others. <i> HostSync </i>
+<br><br>
+
+<li> <b><a href="scripts/guitest.lua"> guitest.lua </a> </b>  Tests all the gui components. Also tests keyboard control (try pressing keys and watching the message window). Tests drag and drop support.
+<br><br>
+<li> <b><a href="scripts/humanize.lua"> humanize.lua </a> </b> Add slight variations to timing and velocity of notes. Based on script posted by austinfx on KVR.
+<br><br>
+<li> <b><a href="scripts/keytracking.lua"> keytracking.lua </a> </b> Very simple keytracking, adjusts CC74 (filter cutoff) so that it increases as the note played runs up the keyboard.
+<br><br>
+<li> <b><a href="scripts/lfo.lua"> lfo.lua </a> </b> LFO example, with a single LFO, synced to the host tempo. The output affects CC74. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/livequantize.lua"> livequantize.lua </a> </b> Delays notes until the next quantized interval in real time. The quantize level can be set in the GUI panel. <i> HostSync </i>
+<br><br>
+<li> <b><a href="scripts/microtuner.lua"> microtuner.lua </a> </b> A more complex script, which can load Scala .scl files, and microtunes incoming input using pitchbends. Input is spread over 16 channels (with independent pitch bend), so polyphonic microtuning works. The output should be sent to a machine which supports independent pitch bend per channel (e.g. polyiblit). The detune level of the target synth can be set in the script. Scala files can be loaded via the GUI.
+<br><br>
+<li> <b><a href="scripts/midi_sampledelay.lua"> midi_sampledelay.lua </a> </b> Delays incoming midi by a set number of samples (set from the GUI).
+<br><br>
+<li> <b><a href="scripts/midiecho.lua"> midiecho.lua </a> </b> Incoming notes are echoed (repeated after a delay with reduced velocity).
+<br><br>
+<li> <b><a href="scripts/midilooper.lua"> midilooper.lua </a> </b> Simple looper. Depress the sustain pedal (or otherwise set CC4 to 127) and the script
+will start recording. When the pedal is released, the recorded loop is played until the pedal is next used to mark a recording point. Double-tap the pedal to clear the loop. The loop start/end can also be quantized to bar boundaries (see the "quantize" variable in the script)
+<br><br>
+<li> <b><a href="scripts/monster_pitch.lua"> monster_pitch.lua </a> </b> Takes incoming notes on channel 0, and replicates them across all 16 channels, and continuously pitch bends all of the channels with a slowly drifting function. Result is a bit like Ligeti's Atmospheres (if you use a choir patch).
+<br><br>
+<li> <b><a href="scripts/note_release.lua"> note_release.lua </a> </b> Simply plays a note a fifth above the original when the original is released. Do-wee, doooo-wee, etc.
+<br><br>
+<li> <b><a href="scripts/ornament.lua"> ornament.lua </a> </b> Adds "ornaments" to notes (inspired by the awesome Buzz machine SpeccyII). 
+<br><br>
+<li> <b><a href="scripts/pitchdrift.lua"> pitchdrift.lua </a> </b> Like <tt>monster_pitch.lua</tt>, but only across two channels and with less extreme pitching.
+<br><br>
+<li> <b><a href="scripts/print_notes.lua"> print_notes.lua </a> </b> Prints out incoming notes to the message window. Shows how to use numberToNote()
+<br><br>
+
+<li> <b><a href="scripts/print_events.lua"> print_events.lua </a> </b> Prints out all incoming events.
+<br><br>
+
+
+<li> <b><a href="scripts/snapshots.lua"> snapshots.lua </a> </b> Records and morphs between snapshots. Hold down a MIDI note, and move some CCs. Do another. Pressing the original will morph back to the CCs that were set while the first note was down. Notes are not passed on to the host.
+<br><br>
+<li> <b><a href="scripts/spin.lua"> spin.lua </a> </b> Send a MIDI note, and the note will be repeated, with increasing delay and decreasing velocity. Sounds a bit like spinning the wheel of a bike if a percussive synth is used.
+<br><br>
+<li> <b><a href="scripts/transpose.lua"> transpose.lua </a> </b> Very basic script, transposes notes below C-4 down a fifth, notes above up by a fifth.
+<br><br>
+<li> <b><a href="scripts/triggerenv.lua"> triggerenv.lua </a> </b> Triggers an ADSR envelope on CC74 when C-2 is pressed. You can set the envelope values from the GUI panel.
+<br><br>
+<li> <b><a href="scripts/velocity_scale.lua"> velocity_scale.lua </a> </b> Changes the velocity response of incoming notes. The response can be set from the GUI. Low values make it less sensitive, high values more sensitive.
+
+
+
+
+
+
+</ul>
+
+
+
+<h3> scripts/contrib </h3>
+Contributed scripts go here!	
+<ul>
+
+
+</ul>
+
+
+<h3> scripts/algo </h3>
+Algorithmic music generation stuff. Only very basic things here just now. All of these are host-synced, so the host must be playing for any output to be generated.
+<ul>
+	<li> <b><a href="scripts/algo/chordcatalogue.lua"> chordcatalogue.lua </a> </b> Plays Tom Johnson's <a href="http://www.editions75.com/English/chordcatenglish.html"> "Chord Catalogue" </a>. <i> HostSync </i>
+	<br><br>
+	<li> <b><a href="scripts/algo/musinum.lua"> musinum.lua </a> </b> Plays a simple sequence, based on the <a href="http://reglos.de/musinum/"> Music in the Numbers</a> algorithm. <i> HostSync </i>
+	<br><br>
+	<li> <b><a href="scripts/algo/random_notes_algo.lua"> random_notes_algo.lua </a> </b> Adapted from a script sent by Robert Lindeman. Plays random, tuneful notes. <i> HostSync </i>
+	<br><br>
+	<li> <b><a href="scripts/algo/random_tunes.lua"> random_tunes.lua </a> </b> Plays sequences of major chords, randomly moving around the circle of fifths. <i> HostSync </i>
+	<br><br>
+	<li> <b><a href="scripts/algo/rhythmic.lua"> rhythmic.lua </a> </b> Plays a very simple rhythmic pattern: daa---da---daa---da---daa---da... <i> HostSync </i>
+	<br><br>
+	<li> <b><a href="scripts/algo/runscales.lua"> runscales.lua </a> </b> Runs up and down scales, with the base note set by the incoming MIDI note. Set the scale to use from the GUI panel. Speed is controlled with the mod wheel. <i> HostSync </i>
+
+</ul>
+
+
+<h3> scripts/test </h3>
+Test functions, not likely to be very interesting to most people.
+
+<ul>
+
+<li> <b><a href="scripts/test/bmptest.lua"> bmptest.lua </a> </b> Tests that bitmap loading works.
+<br><br>
+<li> <b><a href="scripts/test/hashtest.lua"> hashtest.lua </a> </b> Tests the value hashing functions.
+<br><br>
+<li> <b><a href="scripts/test/hosttime.lua"> hosttime.lua </a> </b> Tests setHostTime() functionality (for bidule users).
+<br><br>
+<li> <b><a href="scripts/test/sysextest.lua"> sysextest.lua </a> </b> Tests sysex message packing/unpacking and sysex event send/receive. Unfortunately 
+there are very few hosts that support vst sysex. VSTHost does, however.
+
+
+
+
+
+
+</ul>
+
+
+<h3> scripts/netosc </h3>
+Networking, shared memory communication, and <a href="http://opensoundcontrol.org/"> Open Sound Control </a> examples.
+
+<ul>
+<li> <b><a href="scripts/netosc/cc-osc.lua"> cc-osc.lua </a> </b> OSC example, translates incoming MIDI CCs to OSC messages and sends them on UDP port 7 to localhost.
+<br><br>
+<li> <b><a href="scripts/netosc/midi-otherinstance.lua"> midi-otherinstance.lua </a> </b> Uses shared memory to send midi events to all other instances of VstLua currently running on this machine.
+<br><br>
+<li> <b><a href="scripts/netosc/net-recv.lua"> net-recv.lua </a> </b> Tests network receive capability using recv() in onFrameCb().
+<br><br>
+<li> <b><a href="scripts/netosc/net-recv-loop.lua"> net-recv-loop.lua </a> </b> Test network receive with multithreaded recv().
+<br><br>
+<li> <b><a href="scripts/netosc/net-send.lua"> net-send.lua </a> </b> Sends messages via UDP. Use with <tt>net-recv.lua/net-recv-loop.lua</tt>
+<br><br>
+<li> <b><a href="scripts/netosc/osc-cc.lua"> osc-cc.lua </a> </b> OSC example, translates incoming OSC packets on port 7 to CC messages, in the same format as <tt>cc-osc.lua</tt> uses.
+<br><br>
+<li> <b><a href="scripts/netosc/osc-handler.lua"> osc-handler.lua </a> </b> Shows how to create OSC scripts that respond to events.
+<br><br>
+<li> <b><a href="scripts/netosc/osc-recv-test.lua"> osc-recv-test.lua </a> </b> Dumps incoming OSC packets on port 7000 to the message window.
+<br><br>
+<li> <b><a href="scripts/netosc/osc-send-test.lua"> osc-send-test.lua </a> </b> Sends a simple test OSC message to port 7000 on localhost.
+<br><br>
+<li> <b><a href="scripts/netosc/osctest.lua"> osctest.lua </a> </b> Tests all OSC functionality (all datatypes, bundles, nested bundles, etc.)
+<br><br>
+<li> <b><a href="scripts/netosc/sharedmem.lua"> sharedmem.lua </a> </b> Simple communication example with shared memory.
+<br><br>
+</ul>
+
+
+
+
+    </body>
+</html>
+
